@@ -688,7 +688,7 @@ function GSAbot_install {
     # add GSAbot configuration file to /etc/GSAbot and add permissions
     echo "[+] Adding configuration file to system..."
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/lib/GSAbot.conf -O $HOME/.GSAbot/GSAbot.conf
-    chmod 666 $HOME/.GSAbot/GSAbot.conf
+    chmod 766 $HOME/.GSAbot/GSAbot.conf
 
     # optionally configure method telegram
     while true
