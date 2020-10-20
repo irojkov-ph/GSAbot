@@ -791,7 +791,9 @@ function GSAbot_self_upgrade {
     requirement_root
 
     # stop GSAbot to be sure that it updates correctly
-    kill $(ps aux | grep GSAbot | grep -v grep | awk '{print $2}')
+    if [ ! -z "$(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')" ]; then
+        kill $(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')
+    fi
 
     # download most recent version and add permissions
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O /usr/bin/GSAbot
@@ -851,7 +853,9 @@ function GSAbot_uninstall {
 
             echo "[i] GSAbot will be uninstalled now..."
             echo "[-] Stopping GSAbot..."
-            kill $(ps aux | grep GSAbot | grep -v grep | awk '{print $2}')
+            if [ ! -z "$(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')" ]; then
+                kill $(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')
+            fi
             echo "[-] Removing GSAbot cronjobs from system..."
             rm -f /etc/cron.d/GSAbot_*
             echo "[-] Removing GSAbot.conf from system..."
