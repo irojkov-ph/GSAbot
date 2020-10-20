@@ -671,13 +671,13 @@ function GSAbot_install {
     # add GSAbot folder to /etc and add permissions
     echo "[+] Adding folders to system..."
     mkdir -m 755 -p /etc/GSAbot
-    mkdir -m 766 -p $HOME/.GSAbot
+    mkdir -m 755 -p $HOME/.GSAbot
     # install latest version GSAbot and add permissions
     echo "[+] Installing latest version of GSAbot..."
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/GSAbot.sh -O /usr/bin/GSAbot
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/src/GSAbot.rb -O /etc/GSAbot/GSAbot.rb
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/src/GSAbot_search_on_gscholar.py -O /etc/GSAbot/GSAbot_search_on_gscholar.py
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/src/GSAbot_search_on_arxiv.py -O /etc/GSAbot/GSAbot_search_on_arxiv.py    
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O /usr/bin/GSAbot
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot.rb -O /etc/GSAbot/GSAbot.rb
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_gscholar.py -O /etc/GSAbot/GSAbot_search_on_gscholar.py
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_arxiv.py -O /etc/GSAbot/GSAbot_search_on_arxiv.py    
     chmod 755 /usr/bin/GSAbot
     chmod 755 /etc/GSAbot/GSAbot.rb
     chmod 755 /etc/GSAbot/GSAbot_search_on_gscholar.py
@@ -687,7 +687,7 @@ function GSAbot_install {
     chmod 666 /etc/GSAbot/GSAbot.log
     # add GSAbot configuration file to /etc/GSAbot and add permissions
     echo "[+] Adding configuration file to system..."
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/lib/GSAbot.conf -O $HOME/.GSAbot/GSAbot.conf
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/lib/GSAbot.conf -O $HOME/.GSAbot/GSAbot.conf
     chmod 766 $HOME/.GSAbot/GSAbot.conf
 
     # optionally configure method telegram
@@ -756,7 +756,7 @@ function GSAbot_upgrade {
         echo "[i] Create temporary file for self-upgrade..."
         TMP_INSTALL="$(mktemp)"
         echo "[i] Download most recent version of GSAbot..."
-        wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/GSAbot.sh -O "${TMP_INSTALL}"
+        wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O "${TMP_INSTALL}"
         echo "[i] Set permissions on installation script..."
         chmod 700 "${TMP_INSTALL}"
         echo "[i] Executing installation script..."
@@ -776,7 +776,7 @@ function GSAbot_silent_upgrade {
         # create temporary file for self-upgrade
         TMP_INSTALL="$(mktemp)"
         # download most recent version of GSAbot
-        wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/GSAbot.sh -O "${TMP_INSTALL}"
+        wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O "${TMP_INSTALL}"
         # set permissions on installation script
         chmod 700 "${TMP_INSTALL}"
         # executing installation script
@@ -795,10 +795,10 @@ function GSAbot_self_upgrade {
     kill $(ps aux | grep GSAbot.rb | awk "{print $2}")
 
     # download most recent version and add permissions
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/GSAbot.sh -O /usr/bin/GSAbot
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/src/GSAbot.rb -O /etc/GSAbot/GSAbot.rb
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/src/GSAbot_search_on_gscholar.py -O /etc/GSAbot/GSAbot_search_on_gscholar.py
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/src/GSAbot_search_on_arxiv.py -O /etc/GSAbot/GSAbot_search_on_arxiv.py    
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O /usr/bin/GSAbot
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot.rb -O /etc/GSAbot/GSAbot.rb
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_gscholar.py -O /etc/GSAbot/GSAbot_search_on_gscholar.py
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_arxiv.py -O /etc/GSAbot/GSAbot_search_on_arxiv.py    
     chmod 755 /usr/bin/GSAbot
     chmod 755 /etc/GSAbot/GSAbot.rb
     chmod 755 /etc/GSAbot/GSAbot_search_on_gscholar.py
