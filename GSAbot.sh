@@ -614,7 +614,6 @@ function GSAbot_install_check {
 function GSAbot_install {
     # function requirements
     requirement_root
-    gather_information_distro
 
     echo "[!] GSAbot will be installed now..."
 
@@ -672,7 +671,7 @@ function GSAbot_install {
     # add GSAbot folder to /etc and add permissions
     echo "[+] Adding folders to system..."
     mkdir -m 755 -p /etc/GSAbot
-    mkdir -m 755 -p $HOME/.GSAbot/
+    mkdir -m 766 -p $HOME/.GSAbot
     # install latest version GSAbot and add permissions
     echo "[+] Installing latest version of GSAbot..."
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/GSAbot.sh -O /usr/bin/GSAbot
@@ -689,7 +688,7 @@ function GSAbot_install {
     # add GSAbot configuration file to /etc/GSAbot and add permissions
     echo "[+] Adding configuration file to system..."
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/lib/GSAbot.conf -O $HOME/.GSAbot/GSAbot.conf
-    chmod 644 $HOME/.GSAbot/GSAbot.conf
+    chmod 666 $HOME/.GSAbot/GSAbot.conf
 
     # optionally configure method telegram
     while true
