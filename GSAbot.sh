@@ -232,7 +232,7 @@ function requirement_argument_validity {
     elif [ "${ARGUMENT_CHECK}" == '1' ] && [ -z "${OPTION_CHECK}" ]; then
         error_invalid_option
     # options are incompatible with features
-    elif [ "${ARGUMENT_START_BOT}" == '1' ] && [ [ -z "${OPTION_TELEGRAM_TOKEN}" ] || [ -z "${OPTION_SCALESERP_TOKEN}" ] ]; then
+    elif [ "${ARGUMENT_START_BOT}" == '1' ] && ( [ -z "${OPTION_TELEGRAM_TOKEN}" ] || [ -z "${OPTION_SCALESERP_TOKEN}" ] ); then
         error_invalid_option
     fi
 }

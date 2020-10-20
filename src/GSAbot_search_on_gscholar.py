@@ -130,7 +130,7 @@ for ind in range(len(klist)):
 #############################################################################
 
 new = re.escape(';'.join(nlist) + ';')
-last = re.escape(last + ';')
+last = re.escape(config['foo']['LAST_GSCHOLAR'][1:-1])
 os.system('sed -i "s/LAST_GSCHOLAR=\'%s\'/LAST_GSCHOLAR=\'%s\'/" "%s/.GSAbot/GSAbot.conf"' % (last,new,home))
 
 #############################################################################
