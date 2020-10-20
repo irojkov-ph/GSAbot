@@ -31,10 +31,9 @@ if [ -f $HOME/.GSAbot/GSAbot.conf ]; then
 else
     # otherwise disable these options, features and methods
     GSAbot_CONFIG='disabled' # won't work without GSAbot.conf
-    METHOD_TELEGRAM='disabled' # won't work without GSAbot.conf
 
     # and default to stable branch
-    GSAbot_BRANCH='unstable'
+    GSAbot_BRANCH='main'
 fi
 
 #############################################################################
@@ -687,7 +686,7 @@ function GSAbot_install {
     chmod 666 /etc/GSAbot/GSAbot.log
     # add GSAbot configuration file to /etc/GSAbot and add permissions
     echo "[+] Adding configuration file to system..."
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/lib/GSAbot.conf -O $HOME/.GSAbot/GSAbot.conf
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/lib/GSAbot.conf -O $HOME/.GSAbot/GSAbot.conf
     chmod 766 $HOME/.GSAbot/GSAbot.conf
 
     # optionally configure method telegram
