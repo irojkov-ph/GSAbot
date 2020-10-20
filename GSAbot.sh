@@ -127,7 +127,9 @@ while test -n "$1"; do
         
         --start_bot)
             ARGUMENT_START_BOT='1'
-            OPTION_START_BOT="$2"
+            OPTION_TELEGRAM_TOKEN="$2"
+            OPTION_SCALESERP_TOKEN="$3"
+            shift
             shift
             shift
             ;;
@@ -209,7 +211,7 @@ function error_no_internet_connection {
 function requirement_argument_validity {
 
     # amount of arguments less than one or more than two result in error
-    if [ "${ARGUMENTS}" -eq '0' ] || [ "${ARGUMENTS}" -gt '2' ]; then
+    if [ "${ARGUMENTS}" -eq '0' ] || [ "${ARGUMENTS}" -gt '2' ] && [ "${ARGUMENT_START_BOT}" != '1' ]; then
         error_wrong_amount_of_arguments
     # --start specified but no more argument
     elif [ "${ARGUMENT_START}" == '1' ] && [ -z "${OPTION_START}" ]; then
@@ -230,7 +232,7 @@ function requirement_argument_validity {
     elif [ "${ARGUMENT_CHECK}" == '1' ] && [ -z "${OPTION_CHECK}" ]; then
         error_invalid_option
     # options are incompatible with features
-    elif [ "${ARGUMENT_START_BOT}" == '1' ] && [ -z "${OPTION_START_BOT}" ]; then
+    elif [ "${ARGUMENT_START_BOT}" == '1' ] && [ [ -z "${OPTION_TELEGRAM_TOKEN}" ] || [ -z "${OPTION_SCALESERP_TOKEN}" ] ]; then
         error_invalid_option
     fi
 }
@@ -669,8 +671,8 @@ function GSAbot_install {
 
     # add GSAbot folder to /etc and add permissions
     echo "[+] Adding folders to system..."
-    mkdir -m 755 /etc/GSAbot
-    mkdir -m 755 $HOME/.GSAbot/GSAbot
+    mkdir -m 755 -p /etc/GSAbot
+    mkdir -m 755 -p $HOME/.GSAbot/
     # install latest version GSAbot and add permissions
     echo "[+] Installing latest version of GSAbot..."
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/${GSAbot_BRANCH}/GSAbot.sh -O /usr/bin/GSAbot
@@ -692,19 +694,20 @@ function GSAbot_install {
     # optionally configure method telegram
     while true
         do
-            read -r -p '[?] Configure method Telegram? (yes/no): ' TELEGRAM_CONFIGURE
+            read -r -p '[?] Configure Telegram? (yes/no): ' TELEGRAM_CONFIGURE
             [ "${TELEGRAM_CONFIGURE}" = "yes" ] || [ "${TELEGRAM_CONFIGURE}" = "no" ] && break
             error_type_yes_or_no
         done
 
     if [ "${TELEGRAM_CONFIGURE}" == 'yes' ]; then
         read -r -p '[?] Enter Telegram bot token: ' TELEGRAM_TOKEN
-        echo "[+] Adding telegram access token and chat ID to configuration file..."
-        # sed -i s%'telegram_token_here'%"${TELEGRAM_TOKEN}"%g $HOME/.GSAbot/GSAbot.conf
-        /bin/bash /usr/bin/GSAbot --start_bot "${TELEGRAM_TOKEN}"
+        echo "[+] Adding telegram access token to configuration file..."
+        read -r -p '[?] Enter ScaleSERP token: ' SCALESERP_TOKEN
+        echo "[+] Adding scaleserp token to configuration file..."
+        /bin/bash /usr/bin/GSAbot --start_bot "${TELEGRAM_TOKEN}" "${SCALESERP_TOKEN}"
     else
-        echo "[-] GSAbot was not started because telegram access token not specified yet."
-        echo "    Once you know it run the following command: GSAbot --start_bot TELEGRAM_TOKEN"
+        echo "[-] GSAbot was not started because tokens not specified yet."
+        echo "    Once you know them run the following command: GSAbot --start_bot 'TELEGRAM_TOKEN' 'SCALESERP_TOKEN'"
     fi
 
     # use current major version in $HOME/.GSAbot/GSAbot.conf
@@ -734,8 +737,9 @@ function GSAbot_install {
 }
 
 function GSAbot_start_bot {
-    # replace the default value by the new token
-    sed -i "s/KEYWORDS='$TELEGRAM_TOKEN'/KEYWORDS='$OPTION_START_BOT'/" "$HOME/.GSAbot/GSAbot.conf"
+    # replace the default values by the new token
+    sed -i "s/TELEGRAM_TOKEN='$TELEGRAM_TOKEN'/TELEGRAM_TOKEN='$OPTION_TELEGRAM_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
+    sed -i "s/SCALESERP_TOKEN='$SCALESERP_TOKEN'/SCALESERP_TOKEN='$OPTION_SCALESERP_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
 
     # run and keep the bot running even after exiting the shell or terminal
     nohup ruby /etc/GSAbot/GSAbot.rb >/etc/GSAbot/GSAbot.log &
