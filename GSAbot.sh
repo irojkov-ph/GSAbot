@@ -520,12 +520,12 @@ function GSAbot_check {
 
     # check either gscholar, arxiv or both
     if [ "${OPTION_CHECK}" == 'gscholar' ]; then
-        RESULT_CHECK="$(python3 -W ignore $HOME/Documents/Scripts/GSAbot/GSAbot_search_on_gscholar.py)"
+        RESULT_CHECK="$(python3 -W ignore /etc/GSAbot/GSAbot_search_on_gscholar.py)"
     elif [ "${OPTION_CHECK}" == 'arxiv' ]; then
-        RESULT_CHECK="$(python3 -W ignore $HOME/Documents/Scripts/GSAbot/GSAbot_search_on_arxiv.py)"
+        RESULT_CHECK="$(python3 -W ignore /etc/GSAbot/GSAbot_search_on_arxiv.py)"
     elif [ "${OPTION_CHECK}" == 'both' ]; then
-        RESULT_CHECK="$(python3 -W ignore $HOME/Documents/Scripts/GSAbot/GSAbot_search_on_gscholar.py && 
-                        python3 -W ignore $HOME/Documents/Scripts/GSAbot/GSAbot_search_on_arxiv.py)"
+        RESULT_CHECK="$(python3 -W ignore /etc/GSAbot/GSAbot_search_on_gscholar.py && 
+                        python3 -W ignore /etc/GSAbot/GSAbot_search_on_arxiv.py)"
     fi
 
     # use Ruby for sending Telegram messages
