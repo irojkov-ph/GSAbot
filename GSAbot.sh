@@ -730,7 +730,7 @@ function GSAbot_install {
     # creating or updating cronjobs
     echo "[+] Creating cronjobs..."
     touch /etc/cron.d/GSAbot_cron
-    chmod 666 /etc/cron.d/GSAbot_cron
+    chmod 600 /etc/cron.d/GSAbot_cron
     /bin/bash /usr/bin/GSAbot --cron
 }
 
