@@ -490,12 +490,12 @@ function GSAbot_cron {
     # add a bot's update alerts task
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
         printf "\t\t \[\xE2\x9E\x95] Updating cronjob for automated alerts of available GSAbot's updates ...\n"
-        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} /usr/bin/GSAbot --check_updates" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} root /usr/bin/GSAbot --check_updates" >> /etc/cron.d/GSAbot_cron
     fi
     # add a check & alert task if the status is on
     if [ "${ALERT_STATUS}" == 'on' ]; then
         printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of Google Scholar & arXiv and alerts on Telegram...\n'
-        echo -e "# This cronjob activates automated checks of Google Scholar and arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON} /usr/bin/GSAbot --check both \n" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of Google Scholar and arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON} root /usr/bin/GSAbot --check both \n" >> /etc/cron.d/GSAbot_cron
     fi
 
     # give user feedback when all automated tasks are disabled
