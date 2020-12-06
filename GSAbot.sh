@@ -19,7 +19,7 @@
 #############################################################################
 
 # GSAbot version
-GSAbot_VERSION='1.0.0'
+GSAbot_VERSION='0.1.0'
 
 # check whether GSAbot.conf is available and source it
 if [ -f $HOME/.GSAbot/GSAbot.conf ]; then
