@@ -19,7 +19,7 @@ GSAbot --help
 ```
 ## Usage
 Whenever the bot has started on the server side, you can use the Telegram chat where the bot is install to control it. Here is an example of a first message you can send to it.
-![Start] (https://raw.githubusercontent.com/irojkov-ph/GSAbot/main/img/bot_start_cmd.png)
+![Start] (https://raw.githubusercontent.com/irojkov-ph/GSAbot/main/img/bot_start_cmd.png?raw=true)
 ![Status] (https://raw.githubusercontent.com/irojkov-ph/GSAbot/main/img/bot_status_cmd.png)
 ![List/Add/Remove] (https://raw.githubusercontent.com/irojkov-ph/GSAbot/main/img/bot_list_add_remove_cmds.png)
 
