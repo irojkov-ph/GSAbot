@@ -166,19 +166,19 @@ done
 #############################################################################
 
 function error_invalid_option {
-    printf "\xE2\x9A\xA0 *Warning* You specified invalid arguments"
+    printf "\xE2\x9A\xA0 *Warning* You specified invalid arguments\n"
     printf 'Send "*/help*" for a list of valid arguments.'
     exit 1
 }
 
 function error_wrong_amount_of_arguments {
-    printf '\xE2\x9A\xA0 *Warning* You did not specify enough arguments'
+    printf '\xE2\x9A\xA0 *Warning* You did not specify enough arguments\n'
     printf 'Send "*/help*" for a list of valid arguments.'
     exit 1
 }
 
 function error_not_available {
-    printf '\xE2\x9A\xA0 *Warning* Make sure that the configuration '
+    printf '\xE2\x9A\xA0 *Warning* Make sure that the configuration'
     printf 'file is present on server and is at the right location.'
     exit 1
 }
@@ -230,7 +230,10 @@ function requirement_argument_validity {
     # --check specified but no more argument 
     elif [ "${ARGUMENT_CHECK}" == '1' ] && [ -z "${OPTION_CHECK}" ]; then
         error_invalid_option
-    # options are incompatible with features
+    # --start_bot specified but no other elements
+    elif [ "${ARGUMENT_START_BOT}" == '1' ] && [ -z "${OPTION_TELEGRAM_TOKEN}" ] && [ -z "${OPTION_SCALESERP_TOKEN}" ] ; then
+        OPTION_NO_TOKEN='1'
+    # --start_bot and only one of the two token specified but not the second one
     elif [ "${ARGUMENT_START_BOT}" == '1' ] && ( [ -z "${OPTION_TELEGRAM_TOKEN}" ] || [ -z "${OPTION_SCALESERP_TOKEN}" ] ); then
         error_invalid_option
     fi
@@ -485,17 +488,17 @@ function GSAbot_cron {
     # add an automatic upgrade of the bot task
     if [ "${GSAbot_UPGRADE}" == 'yes' ]; then
         printf '\t\t \[\xE2\x9E\x95] Updating cronjob for automated upgrade of GSAbot...\n'
-        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} root /usr/bin/GSAbot --silent-upgrade" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} root /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
     fi
     # add a bot's update alerts task
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
         printf "\t\t \[\xE2\x9E\x95] Updating cronjob for automated alerts of available GSAbot's updates ...\n"
-        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} root /usr/bin/GSAbot --check_updates" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} root /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
     fi
     # add a check & alert task if the status is on
     if [ "${ALERT_STATUS}" == 'on' ]; then
         printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of Google Scholar & arXiv and alerts on Telegram...\n'
-        echo -e "# This cronjob activates automated checks of Google Scholar and arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON} root /usr/bin/GSAbot --check both \n" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of Google Scholar and arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON} root /usr/bin/GSAbot --check both >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
     fi
 
     # give user feedback when all automated tasks are disabled
@@ -529,18 +532,18 @@ function GSAbot_check {
 
     # use Ruby for sending Telegram messages
     ruby <<EOF
-        require 'telegram_bot'
+        require 'telegram/bot'
 
-        bot = TelegramBot.new(token: "${TELEGRAM_TOKEN}")
-        chat = TelegramBot::Channel.new(id: "${TELEGRAM_CHAT}")
-    
-        scholar_result = "${RESULT_CHECK}".split('------')
-        for res in scholar_result
-            message = TelegramBot::OutMessage.new
-            message.chat = chat
-            message.parse_mode = 'MarkDown'
-            message.text = "#{res}"
-            message.send_with(bot)
+        Telegram::Bot::Client.run("${TELEGRAM_TOKEN}") do |bot|
+        
+            scholar_result = "${RESULT_CHECK}".split('------')
+            for res in scholar_result
+                bot.api.send_message( \
+                            chat_id: "${TELEGRAM_CHAT}", \
+                            text: "#{res}", \
+                            parse_mode: 'MarkDown' \
+                            )
+            end
         end
 EOF
 }
@@ -658,7 +661,7 @@ function GSAbot_install {
     # install ruby packages
     echo "[+] Installing Ruby library dependencies..."
 
-    PACKAGES_GEM=('parseconfig' 'telegram_bot')
+    PACKAGES_GEM=('parseconfig' 'telegram/bot')
     for PCKG in "${PACKAGES_GEM[@]}"
     do 
         if [ ! "$(gem list | grep "${PCKG}")" ];then
@@ -735,12 +738,17 @@ function GSAbot_install {
 }
 
 function GSAbot_start_bot {
-    # replace the default values by the new token
-    sed -i "s/TELEGRAM_TOKEN='$TELEGRAM_TOKEN'/TELEGRAM_TOKEN='$OPTION_TELEGRAM_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
-    sed -i "s/SCALESERP_TOKEN='$SCALESERP_TOKEN'/SCALESERP_TOKEN='$OPTION_SCALESERP_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
+    # function requirements
+    requirement_root
+
+    if [ "${OPTION_NO_TOKEN}" != '1' ]; then
+        # replace the default values by the new token
+        sed -i "s/TELEGRAM_TOKEN='$TELEGRAM_TOKEN'/TELEGRAM_TOKEN='$OPTION_TELEGRAM_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
+        sed -i "s/SCALESERP_TOKEN='$SCALESERP_TOKEN'/SCALESERP_TOKEN='$OPTION_SCALESERP_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
+    fi
 
     # run and keep the bot running even after exiting the shell or terminal
-    nohup ruby /etc/GSAbot/GSAbot.rb >/etc/GSAbot/GSAbot.log &
+    nohup ruby /etc/GSAbot/GSAbot.rb > /etc/GSAbot/GSAbot.log &
 }
 
 
@@ -814,16 +822,19 @@ function GSAbot_self_upgrade {
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
         # use Ruby for sending Telegram messages
         ruby <<EOF
-            require 'telegram_bot'
+            require 'telegram/bot'
 
-            bot = TelegramBot.new(token: "${TELEGRAM_TOKEN}")
-            chat = TelegramBot::Channel.new(id: "${TELEGRAM_CHAT}")
+            Telegram::Bot::Client.run("${TELEGRAM_TOKEN}") do |bot|
             
-            message = TelegramBot::OutMessage.new
-            message.chat = chat
-            message.parse_mode = 'MarkDown'
-            message.text = "I've just upgraded to version ${GSAbot_VERSION} \xF0\x9F\x8E\x89"
-            message.send_with(bot)
+                scholar_result = "${RESULT_CHECK}".split('------')
+                for res in scholar_result
+                    bot.api.send_message( \
+                                chat_id: "${TELEGRAM_CHAT}", \
+                                text: "I've just upgraded to version ${GSAbot_VERSION} \xF0\x9F\x8E\x89", \
+                                parse_mode: 'MarkDown' \
+                                )
+                end
+            end
 EOF
     fi
 

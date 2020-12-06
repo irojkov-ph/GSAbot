@@ -100,17 +100,19 @@ for ind in range(len(klist)):
   else:
     for pos in range(len(outcome)):
       title = outcome[pos].title
-      # Determining if new and last titles are similar
-      sim_score=difflib.SequenceMatcher(a=title.lower(), b=llist[ind].lower()).ratio()
-      if sim_score>.9: break
 
       # First element becomes the new 'last request'
       if pos == 0:
         nlist[ind] = title
 
+      # Determining if new and last titles are similar
+      sim_score=difflib.SequenceMatcher(a=title.lower(), b=llist[ind].lower()).ratio()
+      if sim_score>.9: break
+
       title = re.sub('\[.*?\]', '', title)
       title = re.sub('<.*?>', '', title)
       title = re.sub('\n', '', title)
+      title = re.sub('\u2026','',title)
       title = title.replace('_','\\_')
       title = re.escape(title)
       title = title.lstrip()
