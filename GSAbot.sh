@@ -558,8 +558,8 @@ function GSAbot_check_updates {
     compare_version
 
     if [ "${NEW_VERSION_AVAILABLE}" == '1' ]; then
-        printf "I can be upgraded to the version ${GSAbot_VERSION_RELEASE_NUMBER} \xF0\x9F\x8E\x89"
-        printf "(currently ${GSAbot_VERSION_CURRENT_NUMBER})\n"
+        printf "I can be upgraded to the version ${VERSION_GSAbot} \xF0\x9F\x8E\x89"
+        printf "(currently ${GSAbot_VERSION})\n"
         printf 'Run "GSAbot --upgrade" on the server side to upgrade me !\n'
     else
         printf "No new version of GSAbot available.\n"
