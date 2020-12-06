@@ -12,6 +12,7 @@ Then open the terminal at the location of this project and execute the following
 ./GSAbot.sh --install
 ```
 This will install the project files on your server, i.e. `./src/` files will be now located in the new `/etc/GSAbot/` folder, the `./lib/GSAbot.conf` file will be in a hidden folder in your home directory `$HOME/.GSAbot/` and lastly the `GSAbot.sh` file will be globaly installed in `/usr/bin/` folder. During the installation, the script will ask you for configuring tokens that the bot needs, namely the Telegram bot token and the Scale SERP token.
+
 Execute the help command (`--help` or `-h`) to check what `GSAbot` can do:
 ```
 GSAbot --help
