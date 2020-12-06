@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################################################################
-# Version 1.0.0 (20-10-2019)
+# Version 1.0.0 
 #############################################################################
 
 #############################################################################
@@ -19,7 +19,7 @@
 #############################################################################
 
 # GSAbot version
-GSAbot_VERSION='0.1.3'
+GSAbot_VERSION='1.0.0'
 
 # check whether GSAbot.conf is available and source it
 if [ -f $HOME/.GSAbot/GSAbot.conf ]; then
@@ -307,8 +307,8 @@ function GSAbot_version {
     fi
 
     echo "GSAbot ${GSAbot_VERSION}"
-    echo "Copyright (C) 2020 Rojkov."
-    echo "License CC Attribution-NonCommercial-ShareAlike 4.0 Int."
+    echo "Copyright 2020, Ivan Rojkov."
+    echo "GNU General Public License version 3."
     echo
     echo "Written by Ivan Rojkov"
 }
