@@ -413,7 +413,7 @@ function GSAbot_add {
 
     # print the begining of the msg
     printf "Here is the updated list with all the keywords "
-    printf "that I have to search on Google Scholar."
+    printf "that I have to search on Google Scholar/arXiv. "
     if [ "${ALERT_STATUS}" == 'off' ]; then
         printf "The alerts are currently disabled, send "
         printf '"*/alert _on_*" to enable them.'
@@ -447,7 +447,7 @@ function GSAbot_remove {
 
     # print the begining of the msg
     printf "Here is the updated list with all the keywords "
-    printf "that I have to search on Google Scholar. _However,"
+    printf "that I have to search on Google Scholar/arXiv. _However, "
     printf "I have to warn you that if the name that you gave "
     printf "me do not exactly correspond to a element of the "
     printf "list, I will not remove it!_\n"
