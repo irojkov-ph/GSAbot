@@ -560,10 +560,10 @@ function GSAbot_check_updates {
     if [ "${NEW_VERSION_AVAILABLE}" == '1' ]; then
         printf "I can be upgraded to the version ${GSAbot_VERSION_RELEASE_NUMBER} \xF0\x9F\x8E\x89"
         printf "(currently ${GSAbot_VERSION_CURRENT_NUMBER})\n"
-        printf 'Run "GSAbot --upgrade" on the server side to upgrade me !'
+        printf 'Run "GSAbot --upgrade" on the server side to upgrade me !\n'
     else
         printf "No new version of GSAbot available.\n"
-        printf "I am at the top of my form \xF0\x9F\x8E\x89"
+        printf "I am at the top of my form \xF0\x9F\x8E\x89\n"
     fi
 }
 
@@ -577,11 +577,15 @@ function GSAbot_help {
     echo " GSAbot [command]... [parameter]..."
     echo
     echo "Commands:"
-    echo " --install           Installs GSAbot on the system and unlocks all features"
-    echo " --start_bot TOKEN   Puts the TOKEN in the config file and starts the GSAbot"
+    echo " --install           Install GSAbot on the system and unlocks all features"
+    echo " --start_bot TELEGRAM_TOKEN SCALESERP_TOKEN   "
+    echo "                     Put tokens in the config file and start GSAbot"
     echo " --cron '* * * * *'  Effectuate cron changes from GSAbot config"
+    echo " --check OPTION      Trigger the check for new publications"
+    echo "                     OPTION is either gscholar, arxiv or both"
+    echo " --check_updates     Trigger the check for updates of the bot"
     echo " --upgrade           Upgrade GSAbot to the latest stable version"
-    echo " --uninstall         Uninstalls GSAbot from the system"
+    echo " --uninstall         Uninstall GSAbot from the system"
     echo " --help              Display this help"
     echo " --version           Display version information"
 }
@@ -814,9 +818,9 @@ function GSAbot_self_upgrade {
     chmod 755 /etc/GSAbot/GSAbot_search_on_arxiv.py
 
     # start the GSAbot again
-    /bin/bash /usr/bin/GSAbot --start_bot "${TELEGRAM_TOKEN}"
+    /bin/bash /usr/bin/GSAbot --start_bot "${TELEGRAM_TOKEN}" "${SCALESERP_TOKEN}"
 
-    echo "[i] GSAbot upgraded to version ${GSAbot_VERSION}..."
+    echo "\n[i] GSAbot upgraded to version ${GSAbot_VERSION}..."
 
     # notify on telegram
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
