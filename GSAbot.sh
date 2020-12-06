@@ -19,7 +19,7 @@
 #############################################################################
 
 # GSAbot version
-GSAbot_VERSION='0.1.0'
+GSAbot_VERSION='0.1.1'
 
 # check whether GSAbot.conf is available and source it
 if [ -f $HOME/.GSAbot/GSAbot.conf ]; then
@@ -819,8 +819,8 @@ function GSAbot_self_upgrade {
 
     # start the GSAbot again
     /bin/bash /usr/bin/GSAbot --start_bot "${TELEGRAM_TOKEN}" "${SCALESERP_TOKEN}"
-
-    echo "\n[i] GSAbot upgraded to version ${GSAbot_VERSION}..."
+    echo " " 
+    echo "[i] GSAbot upgraded to version ${GSAbot_VERSION}..."
 
     # notify on telegram
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
