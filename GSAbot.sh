@@ -885,7 +885,7 @@ function GSAbot_uninstall {
 function compare_version {
     # source version information from github and remove dots
     VERSION_GSAbot=$(curl -s https://api.github.com/repos/irojkov-ph/GSAbot/releases/latest | grep tag_name)
-    VERSION_GSAbot="${TEST: -7: 5}"
+    VERSION_GSAbot="${VERSION_GSAbot: -7: 5}"
 
     # Remove points in version numbers
     GSAbot_VERSION_CURRENT_NUMBER="$(echo "${GSAbot_VERSION}" | tr -d '.')"
