@@ -665,12 +665,12 @@ function GSAbot_install {
     # install ruby packages
     echo "[+] Installing Ruby library dependencies..."
 
-    PACKAGES_GEM=('parseconfig' 'telegram/bot')
+    PACKAGES_GEM=('parseconfig' 'telegram-bot-ruby')
     for PCKG in "${PACKAGES_GEM[@]}"
     do 
         if [ ! "$(gem list | grep "${PCKG}")" ];then
             echo "---> Installing ${PCKG} ..."
-            gem install $PCKG -​-silent
+            gem install $PCKG
         fi        
     done
 
