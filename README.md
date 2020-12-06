@@ -41,4 +41,5 @@ Here are some ideas that I haven't implemented yet but which could be in the nex
 
 ## License
 Copyright 2020, I. Rojkov.
+
 Licensed under [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0).

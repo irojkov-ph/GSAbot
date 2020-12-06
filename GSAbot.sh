@@ -315,7 +315,7 @@ function GSAbot_version {
 
 function GSAbot_commands { 
     printf "I can send you alerts when new papers, articles, books, etc. "
-    printf "related to some keywords are published on Google Scholar. \n\n"
+    printf "related to some keywords are published on Google Scholar/arXiv. \n\n"
     printf "You can control me by sending these commands: \n\n"
     printf "/start - Start the bot and display the welcome message\n\n"
     printf "/help - Show this help message\n\n"
@@ -323,12 +323,12 @@ function GSAbot_commands {
     printf "/alert - Change the alert status, you should specify "
     printf "_on_ or _off_\n\n"
     printf "/add - Add one or multiple keywords/keyphrases to the list "
-    printf "such that I know what to look for on Google Scholar, "
+    printf "such that I know what to look for on Google Scholar/arXiv, "
     printf 'please separate them by ";" otherwise I will be lost\n\n'
     printf "/remove - Remove a keyword/keyphrase from my listening list. "
     printf "You should specify only one keyword/keyphrase at a time\n\n"
-    printf "/list - Show the list of keywords to search of Google Scholar\n\n"
-    printf "/cron - Change the frequency at which GSAbot checks Google Scholar, you "
+    printf "/list - Show the list of keywords to search of Google Scholar/arXiv\n\n"
+    printf "/cron - Change the frequency at which GSAbot checks Google Scholar/arXiv, you "
     printf "should specify a cron schedule expression (check "
     printf "[Crontab Guru](https://crontab.guru) for more details)\n\n"
     printf "/version - Show information about my version\n\n"

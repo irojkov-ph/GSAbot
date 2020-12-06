@@ -55,7 +55,7 @@ Telegram::Bot::Client.run(token) do |bot|
           reply = "Hi #{message.from.first_name},  nice to meet you ! "\
                       "I am GSAbot 🤖 \nI can send you alerts when new papers, "\
                       "articles, books, etc. related to *your* favourite "\
-                      "keywords are published on Google Scholar. \nBtw the id of "\
+                      "keywords are published on Google Scholar/arXiv. \nBtw the id of "\
                       "this chat is #{message.chat.id}.\n"\
                       "Send /help so see what kind of commands I understand !"
         when /help/i
