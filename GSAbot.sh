@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################################################################
-# Version 1.0.0 
+# Version 2.0.0 
 #############################################################################
 
 #############################################################################
@@ -19,7 +19,7 @@
 #############################################################################
 
 # GSAbot version
-GSAbot_VERSION='1.0.0'
+GSAbot_VERSION='2.0.0'
 
 # check whether GSAbot.conf is available and source it
 if [ -f $HOME/.GSAbot/GSAbot.conf ]; then
@@ -102,7 +102,7 @@ while test -n "$1"; do
 
         --cron)
             ARGUMENT_CRON='1'
-            OPTION_REMOVE="$2"
+            OPTION_CRON="$2"
             shift
             shift
             ;;
@@ -167,13 +167,13 @@ done
 
 function error_invalid_option {
     printf "\xE2\x9A\xA0 *Warning* You specified invalid arguments\n"
-    printf 'Send "*/help*" for a list of valid arguments.'
+    printf 'Send "*/help*" for a list of valid arguments.\n'
     exit 1
 }
 
 function error_wrong_amount_of_arguments {
     printf '\xE2\x9A\xA0 *Warning* You did not specify enough arguments\n'
-    printf 'Send "*/help*" for a list of valid arguments.'
+    printf 'Send "*/help*" for a list of valid arguments.\n'
     exit 1
 }
 
@@ -226,6 +226,9 @@ function requirement_argument_validity {
         error_invalid_option
     # /remove specified but no more argument
     elif [ "${ARGUMENT_REMOVE}" == '1' ] && [ -z "${OPTION_REMOVE}" ]; then
+        error_invalid_option
+    # /remove specified but no more argument
+    elif [ "${ARGUMENT_CRON}" == '1' ] && [ -z "${OPTION_CRON}" ]; then
         error_invalid_option
     # --check specified but no more argument 
     elif [ "${ARGUMENT_CHECK}" == '1' ] && [ -z "${OPTION_CHECK}" ]; then
@@ -488,17 +491,21 @@ function GSAbot_cron {
     # add an automatic upgrade of the bot task
     if [ "${GSAbot_UPGRADE}" == 'yes' ]; then
         printf '\t\t \[\xE2\x9E\x95] Updating cronjob for automated upgrade of GSAbot...\n'
-        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} root /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} ${GSAbot_USER} /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
     fi
     # add a bot's update alerts task
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
         printf "\t\t \[\xE2\x9E\x95] Updating cronjob for automated alerts of available GSAbot's updates ...\n"
-        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} root /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} ${GSAbot_USER} /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
     fi
     # add a check & alert task if the status is on
     if [ "${ALERT_STATUS}" == 'on' ]; then
-        printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of Google Scholar & arXiv and alerts on Telegram...\n'
-        echo -e "# This cronjob activates automated checks of Google Scholar and arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON} root /usr/bin/GSAbot --check both >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        # Cronjob for Google Scholar
+        printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of Google Scholar and alerts on Telegram...\n'
+        echo -e "# This cronjob activates automated checks of Google Scholar and alerts on Telegram on the chosen schedule\n${ALERT_CRON_GSCHOLAR} ${GSAbot_USER} /usr/bin/GSAbot --check gscholar >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        # Cronjob for arXiv
+        printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of arXiv and alerts on Telegram...\n'
+        echo -e "# This cronjob activates automated checks of arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON_ARXIV} ${GSAbot_USER} /usr/bin/GSAbot --check arxiv >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
     fi
 
     # give user feedback when all automated tasks are disabled
@@ -532,19 +539,20 @@ function GSAbot_check {
 
     # use Ruby for sending Telegram messages
     ruby <<EOF
-        require 'telegram/bot'
+      require 'telegram/bot'
+      
+      Telegram::Bot::Client.run("${TELEGRAM_TOKEN}") do |bot|
 
-        Telegram::Bot::Client.run("${TELEGRAM_TOKEN}") do |bot|
-        
-            scholar_result = "${RESULT_CHECK}".split('------')
-            for res in scholar_result
-                bot.api.send_message( \
-                            chat_id: "${TELEGRAM_CHAT}", \
-                            text: "#{res}", \
-                            parse_mode: 'MarkDown' \
-                            )
-            end
+        scholar_result = "${RESULT_CHECK}".split('------')
+        for res in scholar_result
+          
+          bot.api.send_message( \
+            chat_id: "${TELEGRAM_CHAT}", \
+            text: res, \
+            parse_mode: 'MarkDown' \
+            )
         end
+      end
 EOF
 }
 
@@ -677,7 +685,7 @@ function GSAbot_install {
     # add GSAbot folder to /etc and add permissions
     echo "[+] Adding folders to system..."
     mkdir -m 755 -p /etc/GSAbot
-    mkdir -m 755 -p $HOME/.GSAbot
+    mkdir -m 777 -p $HOME/.GSAbot
     # install latest version GSAbot and add permissions
     echo "[+] Installing latest version of GSAbot..."
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O /usr/bin/GSAbot
@@ -719,6 +727,7 @@ function GSAbot_install {
     echo "[+] Adding default config parameters to configuration file..."
     sed -i s%'major_version_here'%"$(echo "${GSAbot_VERSION}" | cut -c1)"%g $HOME/.GSAbot/GSAbot.conf
     sed -i s%'branch_here'%"$(echo "${GSAbot_BRANCH}")"%g $HOME/.GSAbot/GSAbot.conf
+    sed -i s%'username_goes_here'%"$(echo "${USER}")"%g $HOME/.GSAbot/GSAbot.conf
 
     # restart cron to make sure that cron service is runing
     echo '[+] Restarting the cron service...'
@@ -737,7 +746,7 @@ function GSAbot_install {
     # creating or updating cronjobs
     echo "[+] Creating cronjobs..."
     touch /etc/cron.d/GSAbot_cron
-    chmod 600 /etc/cron.d/GSAbot_cron
+    chmod 644 /etc/cron.d/GSAbot_cron
     /bin/bash /usr/bin/GSAbot --cron
 }
 

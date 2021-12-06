@@ -1,5 +1,5 @@
 #############################################################################
-# Version 1.0.0
+# Version 2.0.0
 #############################################################################
 
 #############################################################################
@@ -20,6 +20,7 @@ import requests
 import json
 import configparser
 import os
+import subprocess
 import re
 import sys
 import difflib
@@ -87,12 +88,9 @@ for ind in range(len(klist)):
 
   # Making the http GET request to Scale SERP
   api_result = requests.get('https://api.scaleserp.com/search', params)
-  # tmp = open('/home/ivan/Documents/Scripts/GSAbot/result.json', 'r')
-  # api_result = json.load(tmp) 
 
   # Storing the JSON response from Scale SERP
   outcome = api_result.json()
-  # outcome = api_result
   
   # If not previous request's result then store the first one
   # No messages are sent by the bot
@@ -112,7 +110,7 @@ for ind in range(len(klist)):
 
       # Determining if new and last titles are similar
       sim_score=difflib.SequenceMatcher(a=title.lower(), b=llist[ind].lower()).ratio()
-      if sim_score>.9: break
+      if sim_score>.8: break
 
       title = re.sub('\[.*?\]', '', title)
       title = re.sub('<.*?>', '', title)
@@ -124,7 +122,7 @@ for ind in range(len(klist)):
       title = title[0].upper() + title[1:].lower()
 
       print('*%s*\n' % title)
-      print('%s\n' % outcome['scholar_results'][pos]['link'])
+      print('[link](%s)\n' % outcome['scholar_results'][pos]['link'])
       print('------\n')
 
 #############################################################################
@@ -133,8 +131,7 @@ for ind in range(len(klist)):
 
 new = re.escape(';'.join(nlist) + ';')
 new = re.sub("'",' ',new)
-last = re.escape(config['foo']['LAST_GSCHOLAR'][1:-1])
-os.system('sed -i "s/LAST_GSCHOLAR=\'%s\'/LAST_GSCHOLAR=\'%s\'/" "%s/.GSAbot/GSAbot.conf"' % (last,new,home))
+os.system("sed -i \"/LAST_GSCHOLAR=/c\LAST_GSCHOLAR=\x27%s\x27\" \"$HOME/.GSAbot/GSAbot.conf\"" % (new))
 
 #############################################################################
 # END

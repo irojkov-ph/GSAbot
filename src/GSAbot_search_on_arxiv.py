@@ -1,5 +1,5 @@
 #############################################################################
-# Version 1.0.0
+# Version 2.0.0
 #############################################################################
 
 #############################################################################
@@ -68,26 +68,29 @@ nlist.extend([u'']*(len(klist)-len(nlist)))
 
 for ind in range(len(klist)):
   # Constructing the query with the keyword
-  query = klist[ind].split(' ')
-  query = ["ti:" + x for x in query]
-  query = ' AND '.join(query)
+  query = re.sub("-",' ',klist[ind]).split(' ')
+  query_title    = ["ti:" + x for x in query]
+  query_abstract = ["abs:" + x for x in query]
+  query = '(' + ' AND '.join(query_title) \
+        + ') OR ('+ ' AND '.join(query_abstract) \
+        + ')'
 
   # Maximum number of results to retrieve
-  max_results = 10
+  max_results = 20
 
   # Sending the query
   outcome = arxiv.query(query=query,
-                       max_results=max_results,
-                       sort_by="lastUpdatedDate",
-                       max_chunk_results=1,
-                       iterative=False)
+                        max_results=max_results,
+                        sort_by="lastUpdatedDate",
+                        iterative=False)
 
   # Check if the outcome is empty, if yes send a warning !
   if not outcome:
-    print('\xE2\x9A\xA0 *Warning* \t the keyword *%s* is not good ' % klist)
-    print('(either too restrictive or too loose) because I find no results on arXiv ')
-    print('which are related to it ! Please change it.\n')
-    print('------\n')
+    print("""\xE2\x9A\xA0 *Warning* \t the keyword *%s* is not good )
+             (either too restrictive, too loose or with an erroneous character)
+             because I find no results on arXiv
+             which are related to it ! Please change it.\n
+             ------\n""" % klist[ind] )
 
   # If not previous request's result then store the first one
   # No messages are sent by the bot
@@ -107,7 +110,7 @@ for ind in range(len(klist)):
 
       # Determining if new and last titles are similar
       sim_score=difflib.SequenceMatcher(a=title.lower(), b=llist[ind].lower()).ratio()
-      if sim_score>.9: break
+      if sim_score>.8: break
 
       title = re.sub('\[.*?\]', '', title)
       title = re.sub('<.*?>', '', title)
@@ -129,8 +132,7 @@ for ind in range(len(klist)):
 
 new = re.escape(';'.join(nlist) + ';')
 new = re.sub("'",' ',new)
-last = re.escape(config['foo']['LAST_ARXIV'][1:-1])
-os.system('sed -i "s/LAST_ARXIV=\'%s\'/LAST_ARXIV=\'%s\'/" "$HOME/.GSAbot/GSAbot.conf"' % (last,new))
+os.system('sed -i "/LAST_ARXIV=/c\LAST_ARXIV=\x27%s\x27" "$HOME/.GSAbot/GSAbot.conf"' % (new))
 
 #############################################################################
 # END
