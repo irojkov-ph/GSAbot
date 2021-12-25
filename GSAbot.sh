@@ -310,7 +310,7 @@ function GSAbot_chat_conf {
         error_not_available
     fi
 
-    GSAbot_CONFIG_CHAT="${$GSAbot_PATH}/chat_conf.d/GSAbot_chat_${OPTION_CHAT_ID}.conf"
+    GSAbot_CONFIG_CHAT="${GSAbot_PATH}/chat_conf.d/GSAbot_chat_${OPTION_CHAT_ID}.conf"
     if [ -f $GSAbot_CONFIG_CHAT]; then
         source $GSAbot_CONFIG_CHAT
     else
