@@ -337,7 +337,7 @@ function GSAbot_start {
     if [ -f $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT]; then
         touch $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
         chmod 644 $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
-    else
+    fi
     /bin/bash /usr/bin/GSAbot --chat_id $TELEGRAM_CHAT --cron
 }
 
