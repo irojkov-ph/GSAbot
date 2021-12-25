@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################################################################
-# Version 2.0.0 
+# Version 3.0.0 
 #############################################################################
 
 #############################################################################
@@ -19,21 +19,20 @@
 #############################################################################
 
 # GSAbot version
-GSAbot_VERSION='2.0.0'
+GSAbot_VERSION='3.0.0'
+GSAbot_PATH="/etc/GSAbot"
+CRON_PATH="/etc/cron.d"
 
 # check whether GSAbot.conf is available and source it
-if [ -f $HOME/.GSAbot/GSAbot.conf ]; then
-    source $HOME/.GSAbot/GSAbot.conf
-    # check whether method telegram has been configured
-    if [ "${TELEGRAM_TOKEN}" == 'telegram_token_here' ]; then
-        METHOD_TELEGRAM='disabled'
-    fi
+if [ -f $GSAbot_PATH/GSAbot.conf ]; then
+    source $GSAbot_PATH/GSAbot.conf
 else
-    # otherwise disable these options, features and methods
-    GSAbot_CONFIG='disabled' # won't work without GSAbot.conf
+    # Options which require GSAbot.conf
+    # will not work if a chat id hasn't been specified
+    GSAbot_CONFIG='disabled'
 
     # and default to stable branch
-    GSAbot_BRANCH='main'
+    GSAbot_BRANCH='v2.beta'
 fi
 
 #############################################################################
@@ -47,6 +46,13 @@ ARGUMENTS="${#}"
 while test -n "$1"; do
     case "$1" in
         
+        --chat_id)
+            ARGUMENT_CHAT_ID='1'
+            OPTION_CHAT_ID="$2"
+            shift
+            shift
+            ;;
+
         --start)
             ARGUMENT_START='1'
             OPTION_START="$2"
@@ -59,7 +65,7 @@ while test -n "$1"; do
             shift
             ;;
 
-        --commands|-cmd)
+        --commands|--cmd|-cmd)
             ARGUMENT_COMMANDS='1'
             shift
             ;;
@@ -184,27 +190,27 @@ function error_wrong_amount_of_arguments {
 
 function error_not_available {
     printf '\xE2\x9A\xA0 *Warning* Make sure that the configuration'
-    printf 'file is present on server and is at the right location.'
+    printf 'file is present on server and is at the right location.\n'
     exit 1
 }
 
 function error_type_yes_or_no {
-    echo "GSAbot: type yes or no and press enter to continue."
+    echo "GSAbot: type yes or no and press enter to continue.\n"
 }
 
 function error_os_not_supported {
-    echo 'GSAbot: operating system is not supported.'
+    echo 'GSAbot: operating system is not supported.\n'
     exit 1
 }
 
 function error_no_root_privileges {
     echo 'GSAbot: you need to be root to perform this command'
-    echo "use 'sudo GSAbot', 'sudo -s' or run GSAbot as root user."
+    echo "use 'sudo GSAbot', 'sudo -s' or run GSAbot as root user.\n"
     exit 1
 }
 
 function error_no_internet_connection {
-    echo 'GSAbot: access to the internet is required.'
+    echo 'GSAbot: access to the internet is required.\n'
     exit 1
 }
 
@@ -217,6 +223,9 @@ function requirement_argument_validity {
     # amount of arguments less than one or more than two result in error
     if [ "${ARGUMENTS}" -eq '0' ] || [ "${ARGUMENTS}" -gt '2' ] && [ "${ARGUMENT_START_BOT}" != '1' ]; then
         error_wrong_amount_of_arguments
+    # --start specified but no more argument
+    elif [ "${ARGUMENT_CHAT_ID}" == '1' ] && [ -z "${OPTION_CHAT_ID}" ]; then
+        error_invalid_option
     # --start specified but no more argument
     elif [ "${ARGUMENT_START}" == '1' ] && [ -z "${OPTION_START}" ]; then
         error_invalid_option
@@ -298,6 +307,21 @@ function requirement_internet {
 # TELEGRAM COMMANDS FUNCTIONS
 #############################################################################
 
+function GSAbot_chat_conf {
+    # return error when config file isn't installed on the system
+    if [ "${GSAbot_CONFIG}" == 'disabled' ]; then
+        error_not_available
+    fi
+
+    GSAbot_CONFIG_CHAT="${$GSAbot_PATH}/chat_conf.d/GSAbot_chat_${OPTION_CHAT_ID}.conf"
+    if [ -f $GSAbot_CONFIG_CHAT]; then
+        source $GSAbot_CONFIG_CHAT
+    else
+        cp $GSAbot_PATH/chat_conf.d/GSAbot_chat_XXX.conf $GSAbot_CONFIG_CHAT
+        source $GSAbot_CONFIG_CHAT
+    fi
+}
+
 function GSAbot_start {
     # return error when config file isn't installed on the system
     if [ "${GSAbot_CONFIG}" == 'disabled' ]; then
@@ -305,7 +329,7 @@ function GSAbot_start {
     fi
 
     # update the configuration file with the chat id
-    sed -i "s/TELEGRAM_CHAT='$TELEGRAM_CHAT'/TELEGRAM_CHAT='$OPTION_START'/" "$HOME/.GSAbot/GSAbot.conf"
+    sed -i "s/TELEGRAM_CHAT='$TELEGRAM_CHAT'/TELEGRAM_CHAT='$OPTION_START'/" $GSAbot_CONFIG_CHAT
 }
 
 function GSAbot_version {
@@ -355,9 +379,9 @@ function GSAbot_status {
     printf "Here is my current status (_on_ means I am allowed to send you alerts and _off_ means I am not).\n"
 
     if [ "${ALERT_STATUS}" == 'on' ]; then
-        printf '\t\t *Status :* \t\t *%s* \t \xE2\x9C\x85' $ALERT_STATUS
+        printf '\t\t *Status :* \t\t *%s* \t \xE2\x9C\x85\n' $ALERT_STATUS
     else
-        printf "\t\t <b>Status :</b> \t\t <strong>%s</strong> \t \xE2\x9B\x94" $ALERT_STATUS
+        printf "\t\t <b>Status :</b> \t\t <strong>%s</strong> \t \xE2\x9B\x94\n" $ALERT_STATUS
     fi
 }
 
@@ -368,16 +392,15 @@ function GSAbot_alert {
     fi
 
     if [ "${ALERT_STATUS}" == "${OPTION_ALERT}" ]; then
-        printf "The alert is already set on %s, I don't change it." $ALERT_STATUS
+        printf "The alert is already set on %s, I don't change it.\n" $ALERT_STATUS
     else
         # update the configuration file
-        sed -i "s/ALERT_STATUS='$ALERT_STATUS'/ALERT_STATUS='$OPTION_ALERT'/" "$HOME/.GSAbot/GSAbot.conf"
+        sed -i "s/ALERT_STATUS='$ALERT_STATUS'/ALERT_STATUS='$OPTION_ALERT'/" $GSAbot_CONFIG_CHAT
         # GSAbot_validate
 
         # print the msg
-        printf "I changed my alert status from %s to %s. " $ALERT_STATUS $OPTION_ALERT
-        printf "You can check it by sending the command /status. "
-        printf "I also ran some validation tests, everything seems to be good."
+        printf "I changed my alert status from %s to %s. \n" $ALERT_STATUS $OPTION_ALERT
+        printf "You can check it by sending the command /status. \n"
     fi
 }
 
@@ -391,7 +414,7 @@ function GSAbot_list {
     if [ "${KEYWORDS}" == '' ]; then
         printf "Currently I am a free bot \xF0\x9F\x8E\x89 \n"
         printf "No keywords defined yet ! Use the command /add "
-        printf "followed by all the keywords you want me to listen to."
+        printf "followed by all the keywords you want me to listen to.\n"
         exit 0
     fi
 
@@ -421,7 +444,7 @@ function GSAbot_add {
 
     # print the begining of the msg
     printf "Here is the updated list with all the keywords "
-    printf "that I have to search on Google Scholar/arXiv. "
+    printf "that I have to search on Google Scholar/arXiv."
     if [ "${ALERT_STATUS}" == 'off' ]; then
         printf "The alerts are currently disabled, send "
         printf '"*/alert _on_*" to enable them.'
@@ -439,7 +462,7 @@ function GSAbot_add {
     done
 
     # update the configuration file
-    sed -i "s/KEYWORDS='$KEYWORDS'/KEYWORDS='$NEW_KEYWORDS'/" "$HOME/.GSAbot/GSAbot.conf"
+    sed -i "s/KEYWORDS='$KEYWORDS'/KEYWORDS='$NEW_KEYWORDS'/" $GSAbot_CONFIG_CHAT
  
 }
 
@@ -474,7 +497,7 @@ function GSAbot_remove {
     done
 
     # update the configuration file
-    sed -i "s/KEYWORDS='$KEYWORDS'/KEYWORDS='$NEW_KEYWORDS'/" "$HOME/.GSAbot/GSAbot.conf"
+    sed -i "s/KEYWORDS='$KEYWORDS'/KEYWORDS='$NEW_KEYWORDS'/" $GSAbot_CONFIG_CHAT
 
 }
 
@@ -490,27 +513,27 @@ function GSAbot_cron {
 
     # remove cronjobs so automated tasks can also be deactivated
     printf '\t\t \[\xE2\x9E\x96] Removing old GSAbot cronjobs...\n'
-    > /etc/cron.d/GSAbot_cron
+    > $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
 
     # go through all the possible tasks and add them one by one
     # add an automatic upgrade of the bot task
     if [ "${GSAbot_UPGRADE}" == 'yes' ]; then
         printf '\t\t \[\xE2\x9E\x95] Updating cronjob for automated upgrade of GSAbot...\n'
-        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} ${GSAbot_USER} /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
     fi
     # add a bot's update alerts task
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
         printf "\t\t \[\xE2\x9E\x95] Updating cronjob for automated alerts of available GSAbot's updates ...\n"
-        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} ${GSAbot_USER} /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
     fi
     # add a check & alert task if the status is on
     if [ "${ALERT_STATUS}" == 'on' ]; then
         # Cronjob for Google Scholar
         printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of Google Scholar and alerts on Telegram...\n'
-        echo -e "# This cronjob activates automated checks of Google Scholar and alerts on Telegram on the chosen schedule\n${ALERT_CRON_GSCHOLAR} ${GSAbot_USER} /usr/bin/GSAbot --check gscholar >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of Google Scholar and alerts on Telegram on the chosen schedule\n${ALERT_CRON_GSCHOLAR} /usr/bin/GSAbot --check gscholar >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
         # Cronjob for arXiv
         printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of arXiv and alerts on Telegram...\n'
-        echo -e "# This cronjob activates automated checks of arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON_ARXIV} ${GSAbot_USER} /usr/bin/GSAbot --check arxiv >/dev/null 2>&1" >> /etc/cron.d/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON_ARXIV} /usr/bin/GSAbot --check arxiv >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
     fi
 
     # give user feedback when all automated tasks are disabled
@@ -534,12 +557,12 @@ function GSAbot_check {
 
     # check either gscholar, arxiv or both
     if [ "${OPTION_CHECK}" == 'gscholar' ]; then
-        RESULT_CHECK="$(python3 -W ignore /etc/GSAbot/GSAbot_search_on_gscholar.py)"
+        RESULT_CHECK="$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py)"
     elif [ "${OPTION_CHECK}" == 'arxiv' ]; then
-        RESULT_CHECK="$(python3 -W ignore /etc/GSAbot/GSAbot_search_on_arxiv.py)"
+        RESULT_CHECK="$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py)"
     elif [ "${OPTION_CHECK}" == 'both' ]; then
-        RESULT_CHECK="$(python3 -W ignore /etc/GSAbot/GSAbot_search_on_gscholar.py && 
-                        python3 -W ignore /etc/GSAbot/GSAbot_search_on_arxiv.py)"
+        RESULT_CHECK="$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py && 
+                        python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py)"
     fi
 
     # use Ruby for sending Telegram messages
@@ -606,7 +629,7 @@ function GSAbot_help {
 
 function GSAbot_install_check {
     # check wheter GSAbot.conf is already installed
-    if [ -f $HOME/.GSAbot/GSAbot.conf ]; then
+    if [ -f $GSAbot_PATH/GSAbot.conf ]; then
         # if true, ask the user whether a reinstall is intended
         while true
             do
@@ -690,25 +713,28 @@ function GSAbot_install {
 
     # add GSAbot folder to /etc and add permissions
     echo "[+] Adding folders to system..."
-    mkdir -m 755 -p /etc/GSAbot
-    mkdir -m 777 -p $HOME/.GSAbot
+    mkdir -m 755 -p $GSAbot_PATH
+    mkdir -m 777 -p $GSAbot_PATH/chat_conf.d
     # install latest version GSAbot and add permissions
     echo "[+] Installing latest version of GSAbot..."
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O /usr/bin/GSAbot
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot.rb -O /etc/GSAbot/GSAbot.rb
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_gscholar.py -O /etc/GSAbot/GSAbot_search_on_gscholar.py
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_arxiv.py -O /etc/GSAbot/GSAbot_search_on_arxiv.py    
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot.rb -O $GSAbot_PATH/GSAbot.rb
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_gscholar.py -O $GSAbot_PATH/GSAbot_search_on_gscholar.py
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_arxiv.py -O $GSAbot_PATH/GSAbot_search_on_arxiv.py    
     chmod 755 /usr/bin/GSAbot
-    chmod 755 /etc/GSAbot/GSAbot.rb
-    chmod 755 /etc/GSAbot/GSAbot_search_on_gscholar.py
-    chmod 755 /etc/GSAbot/GSAbot_search_on_arxiv.py
-    # create a log file in the /etc/GSAbot folder
-    touch /etc/GSAbot/GSAbot.log
-    chmod 666 /etc/GSAbot/GSAbot.log
-    # add GSAbot configuration file to /etc/GSAbot and add permissions
+    chmod 755 $GSAbot_PATH/GSAbot.rb
+    chmod 755 $GSAbot_PATH/GSAbot_search_on_gscholar.py
+    chmod 755 $GSAbot_PATH/GSAbot_search_on_arxiv.py
+    # create a log file in the $GSAbot_PATH folder
+    touch $GSAbot_PATH/GSAbot.log
+    chmod 666 $GSAbot_PATH/GSAbot.log
+    # add GSAbot configuration file to $GSAbot_PATH and add permissions
     echo "[+] Adding configuration file to system..."
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/lib/GSAbot.conf -O $HOME/.GSAbot/GSAbot.conf
-    chmod 766 $HOME/.GSAbot/GSAbot.conf
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/lib/GSAbot.conf -O $GSAbot_PATH/GSAbot.conf
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/lib/GSAbot_chat_XXX.conf -O $GSAbot_PATH/chat_conf.d/GSAbot_chat_XXX.conf
+    chmod 766 $GSAbot_PATH/GSAbot.conf
+    chmod 766 $GSAbot_PATH/chat_conf.d/GSAbot_chat_XXX.conf
+
 
     # optionally configure method telegram
     while true
@@ -729,11 +755,11 @@ function GSAbot_install {
         echo "    Once you know them run the following command: GSAbot --start_bot 'TELEGRAM_TOKEN' 'SCALESERP_TOKEN'"
     fi
 
-    # use current major version in $HOME/.GSAbot/GSAbot.conf
+    # use current major version in $GSAbot_PATH/GSAbot.conf
     echo "[+] Adding default config parameters to configuration file..."
-    sed -i s%'major_version_here'%"$(echo "${GSAbot_VERSION}" | cut -c1)"%g $HOME/.GSAbot/GSAbot.conf
-    sed -i s%'branch_here'%"$(echo "${GSAbot_BRANCH}")"%g $HOME/.GSAbot/GSAbot.conf
-    sed -i s%'username_goes_here'%"$(echo "${USER}")"%g $HOME/.GSAbot/GSAbot.conf
+    sed -i s%'major_version_here'%"$(echo "${GSAbot_VERSION}" | cut -c1)"%g $GSAbot_PATH/GSAbot.conf
+    sed -i s%'branch_here'%"$(echo "${GSAbot_BRANCH}")"%g $GSAbot_PATH/GSAbot.conf
+    # sed -i s%'username_goes_here'%"$(echo "${USER}")"%g $GSAbot_PATH/GSAbot.conf
 
     # restart cron to make sure that cron service is runing
     echo '[+] Restarting the cron service...'
@@ -751,8 +777,8 @@ function GSAbot_install {
 
     # creating or updating cronjobs
     echo "[+] Creating cronjobs..."
-    touch /etc/cron.d/GSAbot_cron
-    chmod 644 /etc/cron.d/GSAbot_cron
+    touch $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
+    chmod 644 $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
     /bin/bash /usr/bin/GSAbot --cron
 }
 
@@ -762,17 +788,17 @@ function GSAbot_start_bot {
 
     if [ "${OPTION_NO_TOKEN}" != '1' ]; then
         # replace the default values by the new token
-        sed -i "s/TELEGRAM_TOKEN='$TELEGRAM_TOKEN'/TELEGRAM_TOKEN='$OPTION_TELEGRAM_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
-        sed -i "s/SCALESERP_TOKEN='$SCALESERP_TOKEN'/SCALESERP_TOKEN='$OPTION_SCALESERP_TOKEN'/" "$HOME/.GSAbot/GSAbot.conf"
+        sed -i "s/TELEGRAM_TOKEN='$TELEGRAM_TOKEN'/TELEGRAM_TOKEN='$OPTION_TELEGRAM_TOKEN'/" "$GSAbot_PATH/GSAbot.conf"
+        sed -i "s/SCALESERP_TOKEN='$SCALESERP_TOKEN'/SCALESERP_TOKEN='$OPTION_SCALESERP_TOKEN'/" "$GSAbot_PATH/GSAbot.conf"
     fi
 
     # run and keep the bot running even after exiting the shell or terminal
-    nohup ruby /etc/GSAbot/GSAbot.rb > /etc/GSAbot/GSAbot.log &
+    nohup ruby $GSAbot_PATH/GSAbot.rb > $GSAbot_PATH/GSAbot.log &
 }
 
 function GSAbot_which_config {
 
-   echo "The config file is here: ${HOME}/.GSAbot/GSAbot.conf"
+   echo "The config file is here: ${GSAbot_PATH}/GSAbot.conf"
 
 }
 
@@ -830,13 +856,13 @@ function GSAbot_self_upgrade {
 
     # download most recent version and add permissions
     wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/GSAbot.sh -O /usr/bin/GSAbot
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot.rb -O /etc/GSAbot/GSAbot.rb
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_gscholar.py -O /etc/GSAbot/GSAbot_search_on_gscholar.py
-    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_arxiv.py -O /etc/GSAbot/GSAbot_search_on_arxiv.py    
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot.rb -O $GSAbot_PATH/GSAbot.rb
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_gscholar.py -O $GSAbot_PATH/GSAbot_search_on_gscholar.py
+    wget --quiet https://raw.githubusercontent.com/irojkov-ph/GSAbot/$GSAbot_BRANCH/src/GSAbot_search_on_arxiv.py -O $GSAbot_PATH/GSAbot_search_on_arxiv.py    
     chmod 755 /usr/bin/GSAbot
-    chmod 755 /etc/GSAbot/GSAbot.rb
-    chmod 755 /etc/GSAbot/GSAbot_search_on_gscholar.py
-    chmod 755 /etc/GSAbot/GSAbot_search_on_arxiv.py
+    chmod 755 $GSAbot_PATH/GSAbot.rb
+    chmod 755 $GSAbot_PATH/GSAbot_search_on_gscholar.py
+    chmod 755 $GSAbot_PATH/GSAbot_search_on_arxiv.py
 
     # start the GSAbot again
     /bin/bash /usr/bin/GSAbot --start_bot "${TELEGRAM_TOKEN}" "${SCALESERP_TOKEN}"
@@ -891,12 +917,10 @@ function GSAbot_uninstall {
                 kill $(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')
             fi
             echo "[-] Removing GSAbot cronjobs from system..."
-            rm -f /etc/cron.d/GSAbot_*
-            echo "[-] Removing GSAbot.conf from system..."
-            rm -rf $HOME/.GSAbot
+            rm -f $CRON_PATH/GSAbot_*
             echo "[-] Removing GSAbot from system..."
             rm -f /usr/bin/GSAbot
-            rm -rf /etc/GSAbot
+            rm -rf $GSAbot_PATH
             exit 0
         fi
 }
@@ -932,45 +956,71 @@ function GSAbot_main {
     requirement_argument_validity
 
     # call relevant functions based on arguments
+    if [ "${ARGUMENT_CHAT_ID}" == '1' ]; then
+        GSAbot_chat_conf
+    else
+        # Options which require GSAbot_chat_XXX.conf
+        # will not work if a chat id hasn't been specified
+        GSAbot_CONFIG='disabled'
+    fi
     if [ "${ARGUMENT_START}" == '1' ]; then
         GSAbot_start
-    elif [ "${ARGUMENT_VERSION}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_VERSION}" == '1' ]; then
         GSAbot_version
-    elif [ "${ARGUMENT_HELP}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_HELP}" == '1' ]; then
         GSAbot_help
-    elif [ "${ARGUMENT_COMMANDS}" == '1' ]; then
+    fi 
+    if [ "${ARGUMENT_COMMANDS}" == '1' ]; then
         GSAbot_commands
-    elif [ "${ARGUMENT_STATUS}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_STATUS}" == '1' ]; then
         GSAbot_status
-    elif [ "${ARGUMENT_ALERT}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_ALERT}" == '1' ]; then
         GSAbot_alert
-    elif [ "${ARGUMENT_ADD}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_ADD}" == '1' ]; then
         GSAbot_add
-    elif [ "${ARGUMENT_REMOVE}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_REMOVE}" == '1' ]; then
         GSAbot_remove
-    elif [ "${ARGUMENT_LIST}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_LIST}" == '1' ]; then
         GSAbot_list
-    elif [ "${ARGUMENT_CRON}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_CRON}" == '1' ]; then
         GSAbot_cron
-    elif [ "${ARGUMENT_CHECK}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_CHECK}" == '1' ]; then
         GSAbot_check
-    elif [ "${ARGUMENT_UPDATES}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_UPDATES}" == '1' ]; then
         GSAbot_check_updates
-    elif [ "${ARGUMENT_INSTALL}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_INSTALL}" == '1' ]; then
         GSAbot_install_check
-    elif [ "${ARGUMENT_START_BOT}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_START_BOT}" == '1' ]; then
         GSAbot_start_bot
-    elif [ "${ARGUMENT_WHICH}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_WHICH}" == '1' ]; then
         GSAbot_which_config
-    elif [ "${ARGUMENT_UPGRADE}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_UPGRADE}" == '1' ]; then
         GSAbot_upgrade
-    elif [ "${ARGUMENT_SILENT_UPGRADE}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_SILENT_UPGRADE}" == '1' ]; then
         GSAbot_silent_upgrade
-    elif [ "${ARGUMENT_SELF_UPGRADE}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_SELF_UPGRADE}" == '1' ]; then
         GSAbot_self_upgrade
-    elif [ "${ARGUMENT_UNINSTALL}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_UNINSTALL}" == '1' ]; then
         GSAbot_uninstall
-    elif [ "${ARGUMENT_NONE}" == '1' ]; then
+    fi
+    if [ "${ARGUMENT_NONE}" == '1' ]; then
         error_invalid_option
     fi
 }

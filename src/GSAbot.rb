@@ -1,5 +1,5 @@
 #############################################################################
-# Version 2.0.0
+# Version 3.0.0
 #############################################################################
 
 #############################################################################
@@ -21,10 +21,9 @@ require 'parseconfig'
 #############################################################################
 # CONFIG VARIABLES
 #############################################################################
-config_file = [Dir.home,'/.GSAbot/GSAbot.conf'].join
+config_file = "#{__dir__}/GSAbot.conf"
 config = ParseConfig.new(config_file)
 token = config['TELEGRAM_TOKEN']
-chat_id = config['TELEGRAM_CHAT']
 
 #############################################################################
 # MAIN LOOP (LISTEN FOR COMMANDS)
@@ -37,82 +36,77 @@ Telegram::Bot::Client.run(token) do |bot|
     bot.listen do |message|
 
       time = Time.now
-      puts time.inspect + " @#{message.from.username}: #{message.text}"
+      puts time.inspect + " @#{message.from.username}"\
+           "in #{message.chat.id} : #{message.text}"
       
-      if (chat_id.nil? || chat_id.empty?)
-        chat = message.chat.id
-      else
-        if (chat_id.eql? message.chat.id.to_s)
-          chat = chat_id
-        else
-          puts time.inspect + " Previous message from the chat #{message.chat.id} has been ignored"
-          next
-        end
-      end
+      chat = message.chat.id
 
       splitted_txt = message.text.split
       command      = splitted_txt.shift
       arguments    = splitted_txt
       
       if arguments.length > 1 and not ["/add","/remove","/cron"].include?(command)
-        reply = "\xE2\x9A\xA0 *Warning* I don't know what to do, please specify only one argument !"
+        reply = "\xE2\x9A\xA0 *Warning* I don't know what to do, "\
+                "please specify only one argument !"
       else
         case command
           when /start/i
             cmd = "GSAbot --start #{chat}"
             tmp = `#{cmd}`
             reply = "Hi #{message.from.first_name},  nice to meet you ! "\
-                        "I am GSAbot 🤖 \nI can send you alerts when new papers, "\
-                        "articles, books, etc. related to *your* favourite "\
-                        "keywords are published on Google Scholar/arXiv. \nBtw the id of "\
-                        "this chat is #{chat}.\n"\
-                        "Send /help so see what kind of commands I understand !"
+                    "I am GSAbot 🤖 \nI can send you alerts when new papers, "\
+                    "articles, books, etc. related to *your* favourite "\
+                    "keywords are published on Google Scholar/arXiv. "\
+                    "\nBtw the id of this chat is #{chat}.\n"\
+                    "Send /help so see what kind of commands I understand !"
           when /help/i
             cmd = "GSAbot --commands"
             reply = `#{cmd}`
           when /version/i
-            cmd = "GSAbot --version"
+            cmd = "GSAbot --chat_id #{chat} --version"
             reply = `#{cmd}`
           when /status/i
-            cmd = "GSAbot --status"
+            cmd = "GSAbot --chat_id #{chat} --status"
             reply = `#{cmd}`
           when /alert/i
-              cmd = ["GSAbot --alert",arguments].join(' ')
+              cmd = ["GSAbot --chat_id #{chat} --alert",arguments].join(' ')
               reply = `#{cmd}`
           when /add/i
-            cmd = ["GSAbot --add '",arguments,"' "].join(' ')
+            cmd = ["GSAbot --chat_id #{chat} --add '",arguments,"' "].join(' ')
             reply = `#{cmd}`
           when /remove/i
-            cmd = ["GSAbot --remove '",arguments,"' "].join(' ')
+            cmd = ["GSAbot --chat_id #{chat} --remove '",arguments,"' "].join(' ')
             reply = `#{cmd}`
           when /list/i
-            cmd = "GSAbot --list"
+            cmd = "GSAbot --chat_id #{chat} --list"
             reply = `#{cmd}`
           when /cron/i
-            cmd = ["GSAbot --cron '",arguments,"' "].join(' ')
+            cmd = ["GSAbot --chat_id #{chat} --cron '",arguments,"' "].join(' ')
             reply = `#{cmd}`
           when /check_gscholar/i
-            cmd = "GSAbot --check gscholar"
+            cmd = "GSAbot --chat_id #{chat} --check gscholar"
             tmp = `#{cmd}`
             reply = "I've just checked Google Scholar, if nothing appeared "\
-                        "that means no new articles were published since the last check.\n"\
-                        'Try out "*/check_arxiv*" for checking arXiv !'
+                    "that means no new articles were published since the last check.\n"\
+                    'Try out "*/check_arxiv*" for checking arXiv !'
           when /check_arxiv/i
-            cmd = "GSAbot --check arxiv"
+            cmd = "GSAbot --chat_id #{chat} --check arxiv"
             tmp = `#{cmd}`
             reply = "I've just checked arXiv, if nothing appeared "\
-                        "that means no new articles were published since the last check.\n"\
-                        'Try out "*/check_gscholar*" for checking Google Scholar !'
+                    "that means no new articles were published since the last check.\n"\
+                    'Try out "*/check_gscholar*" for checking Google Scholar !'
           when /check_updates/i
-            cmd = "GSAbot --check_updates"
+            cmd = "GSAbot --chat_id #{chat} --check_updates"
             reply = `#{cmd}`
           when /stop/i
             # set exit flags
             if just_started != 1
-              reply = "GSAbot is stopped ! To restart it run 'nohup ruby GSAbot.rb > GSAbot.log &' on the server."
+              reply = "GSAbot is stopped ! To restart it run "\
+                      "'nohup ruby GSAbot.rb > GSAbot.log &' on the server."
               to_exit = 1
             else
-              reply = "Thank you for reviving me ! I'll try to not deceive you this time."
+              reply = "Thank you for reviving me ! "\
+                      "I'll try to not deceive you this time."
             end  
           else
             list_forbidden_char = [ '*', '[', ']', '(', ')', '~', '`',\
@@ -129,7 +123,6 @@ Telegram::Bot::Client.run(token) do |bot|
         end
         
         # send the message
-        # puts "sending #{reply.text.inspect} to @#{message.from.username}"
         bot.api.send_message( chat_id: chat, \
                               text: reply, \
                               parse_mode: 'MarkDown' \
