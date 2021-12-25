@@ -220,11 +220,8 @@ function error_no_internet_connection {
 
 function requirement_argument_validity {
 
-    # amount of arguments less than one or more than two result in error
-    if [ "${ARGUMENTS}" -eq '0' ] || [ "${ARGUMENTS}" -gt '2' ] && [ "${ARGUMENT_START_BOT}" != '1' ]; then
-        error_wrong_amount_of_arguments
-    # --start specified but no more argument
-    elif [ "${ARGUMENT_CHAT_ID}" == '1' ] && [ -z "${OPTION_CHAT_ID}" ]; then
+    # --chat_id specified but no more argument
+    if [ "${ARGUMENT_CHAT_ID}" == '1' ] && [ -z "${OPTION_CHAT_ID}" ]; then
         error_invalid_option
     # --start specified but no more argument
     elif [ "${ARGUMENT_START}" == '1' ] && [ -z "${OPTION_START}" ]; then
