@@ -79,10 +79,9 @@ for ind in range(len(klist)):
   max_results = 20
 
   # Sending the query
-  outcome = arxiv.query(query=query,
+  outcome = arxiv.Search(query=query,
                         max_results=max_results,
-                        sort_by="lastUpdatedDate",
-                        iterative=False)
+                        sort_by=arxiv.SortCriterion.LastUpdatedDate)
 
   # Check if the outcome is empty, if yes send a warning !
   if not outcome:
@@ -101,12 +100,17 @@ for ind in range(len(klist)):
   # the title correspond to the last request's result
   # For every new element, the bot sends a message.
   else:
-    for pos in range(len(outcome)):
-      title = outcome[pos].title
+
+    pos=0
+
+    for out in outcome.results():
+    #for pos in range(len(outcome)):
+      title = out.title
 
       # First element becomes the new 'last request'
       if pos == 0:
         nlist[ind] = title
+        pos += 1
 
       # Determining if new and last titles are similar
       sim_score=difflib.SequenceMatcher(a=title.lower(), b=llist[ind].lower()).ratio()
@@ -122,8 +126,8 @@ for ind in range(len(klist)):
       title = title[0].upper() + title[1:].lower()
 
       print('*%s*\n' % title)
-      print('_Last Update:_ %s \t _Published:_ %s\n' % (outcome[pos].updated[0:10],outcome[pos].published[0:10]))
-      print('%s\n' % outcome[pos].arxiv_url)
+      print('_Last Update:_ %s \t _Published:_ %s\n' % (out.updated.date(),out.published.date()))
+      print('%s\n' % out.entry_id)
       print('------\n')
 
 #############################################################################
