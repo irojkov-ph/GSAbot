@@ -113,7 +113,7 @@ while test -n "$1"; do
             shift
             shift
             ;;
-        
+
         --check_updates)
             ARGUMENT_UPDATES='1'
             shift
@@ -123,7 +123,12 @@ while test -n "$1"; do
             ARGUMENT_INSTALL='1'
             shift
             ;;
-        
+
+        --which_config)
+            ARGUMENT_WHICH='1'
+            shift
+            ;;
+
         --start_bot)
             ARGUMENT_START_BOT='1'
             OPTION_TELEGRAM_TOKEN="$2"
@@ -586,6 +591,7 @@ function GSAbot_help {
     echo
     echo "Commands:"
     echo " --install           Install GSAbot on the system and unlocks all features"
+    echo " --which_config      Print the path to the config file"
     echo " --start_bot TELEGRAM_TOKEN SCALESERP_TOKEN   "
     echo "                     Put tokens in the config file and start GSAbot"
     echo " --cron '* * * * *'  Effectuate cron changes from GSAbot config"
@@ -762,6 +768,12 @@ function GSAbot_start_bot {
 
     # run and keep the bot running even after exiting the shell or terminal
     nohup ruby /etc/GSAbot/GSAbot.rb > /etc/GSAbot/GSAbot.log &
+}
+
+function GSAbot_which_config {
+
+   echo "The config file is here: ${HOME}/.GSAbot/GSAbot.conf"
+
 }
 
 
@@ -943,11 +955,13 @@ function GSAbot_main {
     elif [ "${ARGUMENT_CHECK}" == '1' ]; then
         GSAbot_check
     elif [ "${ARGUMENT_UPDATES}" == '1' ]; then
-        GSAbot_check_updates 
+        GSAbot_check_updates
     elif [ "${ARGUMENT_INSTALL}" == '1' ]; then
         GSAbot_install_check
     elif [ "${ARGUMENT_START_BOT}" == '1' ]; then
         GSAbot_start_bot
+    elif [ "${ARGUMENT_WHICH}" == '1' ]; then
+        GSAbot_which_config
     elif [ "${ARGUMENT_UPGRADE}" == '1' ]; then
         GSAbot_upgrade
     elif [ "${ARGUMENT_SILENT_UPGRADE}" == '1' ]; then
