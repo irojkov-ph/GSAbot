@@ -32,7 +32,7 @@ else
     GSAbot_CONFIG='disabled'
 
     # and default to stable branch
-    GSAbot_BRANCH='v2.beta'
+    GSAbot_BRANCH='v3.beta'
 fi
 
 #############################################################################
