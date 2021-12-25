@@ -329,7 +329,16 @@ function GSAbot_start {
     fi
 
     # update the configuration file with the chat id
+    printf "\t\t \[\xE2\x9E\x95] Creating chat's config file..."
     sed -i "s/TELEGRAM_CHAT='$TELEGRAM_CHAT'/TELEGRAM_CHAT='$OPTION_START'/" $GSAbot_CONFIG_CHAT
+
+    # creating or updating cronjobs
+    printf "\t\t \[\xE2\x9E\x95] Creating default cronjobs..."
+    if [ -f $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT]; then
+        touch $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
+        chmod 644 $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
+    else
+    /bin/bash /usr/bin/GSAbot --chat_id $TELEGRAM_CHAT --cron
 }
 
 function GSAbot_version {
@@ -775,11 +784,6 @@ function GSAbot_install {
         systemctl restart cronie.service
     fi
 
-    # creating or updating cronjobs
-    echo "[+] Creating cronjobs..."
-    touch $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
-    chmod 644 $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
-    /bin/bash /usr/bin/GSAbot --cron
 }
 
 function GSAbot_start_bot {
