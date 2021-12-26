@@ -222,13 +222,15 @@ function error_not_available {
     exit 1
 }
 
-function error_type_yes_or_no {
-    echo "GSAbot: type yes or no and press enter to continue.\n"
+function error_bad_cron_syntax {
+    printf '\xE2\x9A\xA0 *Warning* \n'
+    printf 'Make sure that the cron schedule expression has a good syntax '
+    printf '(check [Crontab Guru](https://crontab.guru) for more details).\n'
+    exit 1
 }
 
-function error_bad_cron {
-    echo "GSAbot: cron schedule expression has a bad syntax.\n"
-    exit 1
+function error_type_yes_or_no {
+    echo "GSAbot: type yes or no and press enter to continue.\n"
 }
 
 function error_os_not_supported {
@@ -276,18 +278,22 @@ function requirement_argument_validity {
         error_invalid_option
     # /cron specified with either 0, 1 or 2 arguments
     elif [ "${ARGUMENT_CRON}" == '1' ] && [ -z "${OPTION_CRON1}" ] && [ -z "${OPTION_CRON2}" ]; then
-        OPTION_CRON_WHICH="none"
+        OPTION_CRON_WHICH='none'
     elif [ "${ARGUMENT_CRON}" == '1' ] && [ ! -z "${OPTION_CRON1}" ] && [ -z "${OPTION_CRON2}" ]; then
-        OPTION_CRON_WHICH="both"
-        OPTION_CRON="${OPTION_CRON1}"
-        if [ "$(requirement_good_cron "${OPTION_CRON}")" == '1' ]; then
-            error_bad_cron
+        OPTION_CRON_WHICH='both'
+        OPTION_CRON=${OPTION_CRON1}
+        # validate the cron schedule syntax
+        $(python3 -c "from crontab import CronTab; CronTab('${OPTION_CRON//\\/}');" 1> /dev/null 2>&1 )
+        if [[ ${?} = 1 ]]; then
+            error_bad_cron_syntax
         fi
     elif [ "${ARGUMENT_CRON}" == '1' ] && [ ! -z "${OPTION_CRON1}" ] && [ ! -z "${OPTION_CRON2}" ]; then
         OPTION_CRON_WHICH=$OPTION_CRON1
-        OPTION_CRON=$OPTION_CRON2
-        if [ "$(requirement_good_cron "${OPTION_CRON}")" == '1' ]; then
-            error_bad_cron
+        OPTION_CRON=${OPTION_CRON2}
+        # validate the cron schedule syntax
+        $(python3 -c "from crontab import CronTab; CronTab('${OPTION_CRON//\\/}');" 1> /dev/null 2>&1 )
+        if [[ ${?} = 1 ]]; then
+            error_bad_cron_syntax
         fi
     # --check specified but no more argument 
     elif [ "${ARGUMENT_CHECK}" == '1' ] && [ -z "${OPTION_CHECK}" ]; then
@@ -348,17 +354,6 @@ function requirement_internet {
     fi
 }
 
-function requirement_good_cron {
-    # check if the specified cron schedule has a good syntax
-    python3 1> /dev/null 2>&1 <<EOF
-from crontab import CronTab
-CronTab('${1}')
-EOF
-    echo "${?}"
-
-}
-
-
 #############################################################################
 # TELEGRAM COMMANDS FUNCTIONS
 #############################################################################
@@ -384,9 +379,16 @@ function GSAbot_start {
         error_not_available
     fi
 
-    # update the configuration file with the chat id
+    # create a new or override an existing chat configuration file
     printf "\t\t \[\xE2\x9E\x95] Creating chat's config file...\n"
+    GSAbot_CONFIG_CHAT="${GSAbot_PATH}/chat_conf.d/GSAbot_chat_${OPTION_START}.conf"
+    cp $GSAbot_PATH/chat_conf.d/GSAbot_chat_XXX.conf $GSAbot_CONFIG_CHAT
+    source $GSAbot_CONFIG_CHAT
+
+    # update the configuration file with the chat id
+    printf "\t\t \[\xE2\x9E\x95] Uploading chat's id in the config file...\n"
     sed -i "s/TELEGRAM_CHAT='$TELEGRAM_CHAT'/TELEGRAM_CHAT='$OPTION_START'/" $GSAbot_CONFIG_CHAT
+    source $GSAbot_CONFIG_CHAT
 
     # creating or updating cronjobs
     printf "\t\t \[\xE2\x9E\x95] Creating default cronjobs...\n"
@@ -425,12 +427,12 @@ function GSAbot_commands {
     printf "/remove - Remove a keyword/keyphrase from my listening list. "
     printf "You should specify only one keyword/keyphrase at a time\n\n"
     printf "/list - Show the list of keywords to search of Google Scholar/arXiv\n\n"
-    printf "/cron - Change the frequency at which GSAbot checks Google Scholar/arXiv.\n You "
+    printf "/cron - Change the frequency at which GSAbot checks Google Scholar/arXiv. You "
     printf "should specify a cron schedule expression (check "
-    printf "[Crontab Guru](https://crontab.guru) for more details),e.g.:\n"
-    printf "\t/cron '5 4 * * *' \t (check both every day at 04:05)\n"
-    printf "\t/cron gscholar '5 4 * * *' \t (check Google Scholar every day at 04:05)\n"
-    printf "\t/cron arxiv '5 4 * * *' \t (check arXiv every day at 04:05)\n\n"
+    printf "[Crontab Guru](https://crontab.guru) for more details), e.g.:\n"
+    printf "\t\t /cron '5 4 \* \* \*' \t (check both every day at 04:05)\n"
+    printf "\t\t /cron gscholar '5 4 \* \* \*' \t (check G. Scholar every day at 04:05)\n"
+    printf "\t\t /cron arxiv '5 4 \* \* \*' \t (check arXiv every day at 04:05)\n\n"
     printf "/version - Show information about my version\n\n"
     printf "/check\_gscholar - Check Google Scholar manually (can take quite some time)\n\n"
     printf "/check\_arxiv - Check arXiv manually (can take quite some time)\n\n"
@@ -464,7 +466,6 @@ function GSAbot_alert {
     else
         # update the configuration file
         sed -i "s/ALERT_STATUS='$ALERT_STATUS'/ALERT_STATUS='$OPTION_ALERT'/" $GSAbot_CONFIG_CHAT
-        # GSAbot_validate
 
         # print the msg
         printf "I changed my alert status from %s to %s. \n" $ALERT_STATUS $OPTION_ALERT
@@ -576,18 +577,14 @@ function GSAbot_cron {
     fi
 
     if [ "${OPTION_CRON_WHICH}" == 'gscholar' ]; then
-        sed -i "s/ALERT_CRON_GSCHOLAR='$ALERT_CRON_GSCHOLAR'\
-                 /ALERT_CRON_GSCHOLAR='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
+        sed -i "s/ALERT_CRON_GSCHOLAR=.*/ALERT_CRON_GSCHOLAR='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
     elif [ "${OPTION_CRON_WHICH}" == 'arxiv' ]; then
-        sed -i "s/ALERT_CRON_ARXIV='$ALERT_CRON_ARXIV'\
-                 /ALERT_CRON_ARXIV='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
+        sed -i "s/ALERT_CRON_ARXIV=.*/ALERT_CRON_ARXIV='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
     elif [ "${OPTION_CRON_WHICH}" == 'both' ]; then
-        sed -i "s/ALERT_CRON_GSCHOLAR='$ALERT_CRON_GSCHOLAR'\
-                 /ALERT_CRON_GSCHOLAR='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
-        sed -i "s/ALERT_CRON_ARXIV='$ALERT_CRON_ARXIV'\
-                 /ALERT_CRON_ARXIV='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
+        sed -i "s/ALERT_CRON_GSCHOLAR=.*/ALERT_CRON_GSCHOLAR='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
+        sed -i "s/ALERT_CRON_ARXIV=.*/ALERT_CRON_ARXIV='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
     elif [ "${OPTION_CRON_WHICH}" != 'none' ]; then
-        printf "\xE2\x9A\xA0 *Warning* '${OPTION_CRON_WHICH}' does not exist as "
+        printf "\xE2\x9A\xA0 *Warning*\n'${OPTION_CRON_WHICH}' does not exist as "
         printf "a valid option for the cron command. The valid ones are "
         printf "only 'gscholar', 'arxiv' and 'both'.\n\n"
     fi
@@ -596,24 +593,20 @@ function GSAbot_cron {
     # to have the right cron schedule
     source $GSAbot_CONFIG_CHAT
 
-    # begining of the msg
-    printf "Here is what I am doing on the server's side\n\n"
-    printf '\*\*\*UPDATING CRONJOBS\*\*\* \n\n'
-
     # remove cronjobs so automated tasks can also be deactivated
+    printf 'Updating cronjobs:\n'
     printf '\t\t \[\xE2\x9E\x96] Removing old GSAbot cronjobs...\n'
+    > $CRON_PATH/GSAbot_cron
     > $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
 
     # go through all the possible tasks and add them one by one
     # add an automatic upgrade of the bot task
     if [ "${GSAbot_UPGRADE}" == 'yes' ]; then
-        printf '\t\t \[\xE2\x9E\x95] Updating cronjob for automated upgrade of GSAbot...\n'
-        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
+        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron
     fi
     # add a bot's update alerts task
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
-        printf "\t\t \[\xE2\x9E\x95] Updating cronjob for automated alerts of available GSAbot's updates ...\n"
-        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
+        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron
     fi
     # add a check & alert task if the status is on
     if [ "${ALERT_STATUS}" == 'on' ]; then
@@ -907,6 +900,11 @@ function GSAbot_install {
         systemctl restart cronie.service
     fi
 
+    # create a cron job file for upgrading and updating cron schedules
+    echo "[+] Creating a cron file for bot's common jobs ..."
+    touch $CRON_PATH/GSAbot_cron
+    chmod 644 $CRON_PATH/GSAbot_cron
+
 }
 
 function GSAbot_set_token {
@@ -947,9 +945,7 @@ Description=GSAbot service
 [Service]
 User=root
 Restart=on-failure
-ExecStart=/usr/bin/nohup /usr/bin/ruby ${GSAbot_PATH}/GSAbot.rb > ${GSAbot_PATH}/GSAbot.log &
-ExecReload=kill -HUP $MAINPID
-ExecStop=kill -HUP $MAINPID
+ExecStart=/bin/sh -c "exec /usr/bin/ruby ${GSAbot_PATH}/GSAbot.rb >> ${GSAbot_PATH}/GSAbot.log"
 
 [Install]
 WantedBy = multi-user.target

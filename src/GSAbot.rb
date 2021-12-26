@@ -42,25 +42,34 @@ Telegram::Bot::Client.run(token) do |bot|
       
       chat = message.chat.id
 
-      splitted_txt = message.text.split
+      list_forbidden_char = [ '*', '[', ']', '(', ')', '~', '`',\
+                              '>', '#', '+', '-', '=', '|', '{',\
+                              '}', '.', '!', '_' ]
+      msg = message.text
+      for el in list_forbidden_char
+        if msg.include?(el)
+          msg = msg.gsub! el, "\\#{el}"
+        end
+      end
+      splitted_txt = msg.split
       command      = splitted_txt.shift
       arguments    = splitted_txt
-      
+
       if arguments.length > 1 and not ["/add","/remove","/cron"].include?(command)
-        reply = "\xE2\x9A\xA0 *Warning* I don't know what to do, "\
-                "please specify only one argument !"
+        reply = "\xE2\x9A\xA0 *Warning*\nI don't know what to do, "\
+                "please specify the number of argument(s)!"
       else
         case command
           when /start/i
             cmd = "GSAbot --start #{chat}"
             tmp = `#{cmd}`
-            reply = "Hi #{message.from.first_name},  nice to meet you ! "\
+            reply = "Hi #{message.from.first_name},  nice to meet you! "\
                     "I am GSAbot 🤖 \nI can send you alerts when new papers, "\
                     "articles, books, etc. related to *your* favourite "\
                     "keywords are published on Google Scholar/arXiv.\n"\
                     "Btw the id of this chat is #{chat}.\n"\
                     "#{tmp}"\
-                    "Send /help so see what kind of commands I understand !"
+                    "Send /help so see what kind of commands I understand!"
           when /help/i
             cmd = "GSAbot --commands"
             reply = `#{cmd}`
@@ -83,63 +92,53 @@ Telegram::Bot::Client.run(token) do |bot|
             cmd = "GSAbot --chat_id #{chat} --list"
             reply = `#{cmd}`
           when /cron/i
-            cmd = ["GSAbot --chat_id #{chat} --cron '",arguments,"' "].join(' ')
+            cmd = ["GSAbot --chat_id #{chat} --cron",arguments," "].join(' ')
             reply = `#{cmd}`
           when /check_gscholar/i
             cmd = "GSAbot --chat_id #{chat} --check gscholar"
             tmp = `#{cmd}`
             reply = "I've just checked Google Scholar, if nothing appeared "\
                     "that means no new articles were published since the last check.\n"\
-                    'Try out "*/check_arxiv*" for checking arXiv !'
+                    'Try out "*/check_arxiv*" for checking arXiv!'
           when /check_arxiv/i
             cmd = "GSAbot --chat_id #{chat} --check arxiv"
             tmp = `#{cmd}`
             reply = "I've just checked arXiv, if nothing appeared "\
                     "that means no new articles were published since the last check.\n"\
-                    'Try out "*/check_gscholar*" for checking Google Scholar !'
+                    'Try out "*/check_gscholar*" for checking Google Scholar!'
           when /check_updates/i
             cmd = "GSAbot --chat_id #{chat} --check_updates"
             reply = `#{cmd}`
           when /stop/i
             # set exit flags
             if message.from.username == admin && just_started != 1
-              reply = "GSAbot is stopped ! To restart it run :"\
+              reply = "GSAbot is stopped! To restart it run: "\
                       "\`GSAbot --start_bot\`"
               to_exit = 1
-            if message.from.username != admin && just_started != 1
+            elsif message.from.username != admin && just_started != 1
                 reply = "\xE2\x9A\xA0 *Warning* \n"\
                         "You are not the admin user of the server "\
                         "where the bot is running, thus you cannot "\
                         "stop it."
                 to_exit = 1
             else
-              reply = "Thank you for reviving me ! "\
+              reply = "Thank you for reviving me! "\
                       "I'll try to not deceive you this time."
             end  
           else
-            list_forbidden_char = [ '*', '[', ']', '(', ')', '~', '`',\
-                                    '>', '#', '+', '-', '=', '|', '{',\
-                                    '}', '.', '!', '_' ]
-            command_new = command
-            for el in list_forbidden_char
-              if command_new.include?(el)
-                command_new = command_new.gsub! el, "\\#{el}"
-              end
-            end
+            reply = "I have no idea what #{command} means."
+        end
+      end
 
-            reply = "I have no idea what #{command_new} means."
-        end
-        
-        # send the message
-        bot.api.send_message( chat_id: chat, \
-                              text: reply, \
-                              parse_mode: 'MarkDown' \
-                            )
-        # exit if exit flag was set
-        if to_exit==1
-          exit
-        end
-        
+      # send the message
+      bot.api.send_message( chat_id: chat, \
+                            text: reply, \
+                            parse_mode: 'MarkDown' \
+                          )
+
+      # exit if exit flag was set
+      if to_exit==1
+        exit
       end
 
       just_started = 0
