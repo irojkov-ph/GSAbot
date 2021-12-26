@@ -24,6 +24,7 @@ require 'parseconfig'
 config_file = "#{__dir__}/GSAbot.conf"
 config = ParseConfig.new(config_file)
 token = config['TELEGRAM_TOKEN']
+admin = config['GSAbot_SERVER_ADMIN']
 
 #############################################################################
 # MAIN LOOP (LISTEN FOR COMMANDS)
@@ -58,13 +59,13 @@ Telegram::Bot::Client.run(token) do |bot|
                     "articles, books, etc. related to *your* favourite "\
                     "keywords are published on Google Scholar/arXiv.\n"\
                     "Btw the id of this chat is #{chat}.\n"\
-                    "#{tmp}\n"\
+                    "#{tmp}"\
                     "Send /help so see what kind of commands I understand !"
           when /help/i
             cmd = "GSAbot --commands"
             reply = `#{cmd}`
           when /version/i
-            cmd = "GSAbot --chat_id #{chat} --version"
+            cmd = "GSAbot --version"
             reply = `#{cmd}`
           when /status/i
             cmd = "GSAbot --chat_id #{chat} --status"
@@ -101,10 +102,16 @@ Telegram::Bot::Client.run(token) do |bot|
             reply = `#{cmd}`
           when /stop/i
             # set exit flags
-            if just_started != 1
-              reply = "GSAbot is stopped ! To restart it run "\
-                      "'nohup ruby GSAbot.rb > GSAbot.log &' on the server."
+            if message.from.username == admin && just_started != 1
+              reply = "GSAbot is stopped ! To restart it run :"\
+                      "\`GSAbot --start_bot\`"
               to_exit = 1
+            if message.from.username != admin && just_started != 1
+                reply = "\xE2\x9A\xA0 *Warning* \n"\
+                        "You are not the admin user of the server "\
+                        "where the bot is running, thus you cannot "\
+                        "stop it."
+                to_exit = 1
             else
               reply = "Thank you for reviving me ! "\
                       "I'll try to not deceive you this time."
