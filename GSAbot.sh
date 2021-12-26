@@ -846,9 +846,9 @@ function GSAbot_install {
     
     # change server's admin username (telegram username, used to stop) 
     echo "[!] Change the user name of the admin of the server bot..."
-    read -r -p "[?] Enter admin's user name: " GSAbot_SERVER_ADMIN_NEW
+    read -r -p "[?] Enter admin's user name: " OPTION_SET_ADMIN
     echo "[+] Changing admin's user name..."
-    /bin/bash /usr/bin/GSAbot --set_admin "${GSAbot_SERVER_ADMIN_NEW}"
+    /bin/bash /usr/bin/GSAbot --set_admin
 
     # optionally create a systemd service file
     while true
@@ -915,8 +915,10 @@ function GSAbot_set_token {
 
     if [ "${OPTION_NO_TOKEN}" != '1' ]; then
         # replace the default values by the new token
-        sed -i "s/TELEGRAM_TOKEN='$TELEGRAM_TOKEN'/TELEGRAM_TOKEN='$OPTION_TELEGRAM_TOKEN'/" "$GSAbot_PATH/GSAbot.conf"
-        sed -i "s/SCALESERP_TOKEN='$SCALESERP_TOKEN'/SCALESERP_TOKEN='$OPTION_SCALESERP_TOKEN'/" "$GSAbot_PATH/GSAbot.conf"
+        sed -i "s/TELEGRAM_TOKEN='$TELEGRAM_TOKEN'/TELEGRAM_TOKEN='$OPTION_TELEGRAM_TOKEN'/"\
+               "$GSAbot_PATH/GSAbot.conf"
+        sed -i "s/SCALESERP_TOKEN='$SCALESERP_TOKEN'/SCALESERP_TOKEN='$OPTION_SCALESERP_TOKEN'/"\
+               "$GSAbot_PATH/GSAbot.conf"
     fi
 
 }
@@ -925,7 +927,7 @@ function GSAbot_set_admin {
     # function requirements
     requirement_root
 
-    sed -i "s/GSAbot_SERVER_ADMIN='$GSAbot_SERVER_ADMIN'/GSAbot_SERVER_ADMIN='$1'/"\
+    sed -i "s/GSAbot_SERVER_ADMIN='$GSAbot_SERVER_ADMIN'/GSAbot_SERVER_ADMIN='$OPTION_SET_ADMIN'/"\
            "$GSAbot_PATH/GSAbot.conf"
 
 }
