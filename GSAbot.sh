@@ -586,9 +586,7 @@ function GSAbot_cron {
                  /ALERT_CRON_GSCHOLAR='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
         sed -i "s/ALERT_CRON_ARXIV='$ALERT_CRON_ARXIV'\
                  /ALERT_CRON_ARXIV='$OPTION_CRON'/" $GSAbot_CONFIG_CHAT
-    elif [ "${OPTION_CRON_WHICH}" == 'none' ]; then
-
-    else
+    elif [ "${OPTION_CRON_WHICH}" != 'none' ]; then
         printf "\xE2\x9A\xA0 *Warning* '${OPTION_CRON_WHICH}' does not exist as "
         printf "a valid option for the cron command. The valid ones are "
         printf "only 'gscholar', 'arxiv' and 'both'.\n\n"
