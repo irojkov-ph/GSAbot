@@ -796,7 +796,7 @@ function GSAbot_install {
     PACKAGES_PIP=('requests' 'arxiv' 'crontab')
     for PCKG in "${PACKAGES_PIP[@]}"
     do 
-        if [ ! "$(pip3 list --format=legacy | grep "${PCKG}")" ];then
+        if [ ! "$(pip3 list --format=columns | grep "${PCKG}")" ];then
             echo "---> Installing ${PCKG} ..."
             pip3 install $PCKG -q
         fi        
