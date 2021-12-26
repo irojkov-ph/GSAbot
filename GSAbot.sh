@@ -945,7 +945,7 @@ Description=GSAbot service
 [Service]
 User=root
 Restart=on-failure
-ExecStart=/bin/sh -c "exec /usr/bin/ruby ${GSAbot_PATH}/GSAbot.rb >> ${GSAbot_PATH}/GSAbot.log"
+ExecStart=/bin/sh -c "exec /usr/bin/ruby ${GSAbot_PATH}/GSAbot.rb >> ${GSAbot_PATH}/GSAbot.log 2>> ${GSAbot_PATH}/GSAbot.log"
 
 [Install]
 WantedBy = multi-user.target
@@ -1106,13 +1106,15 @@ function GSAbot_uninstall {
         # uninstall when intended
         if [ "${UNINSTALL}" = "yes" ]; then
 
-            echo "[i] GSAbot will be uninstalled now..."
+            echo "[!] GSAbot will be uninstalled now..."
             echo "[-] Stopping GSAbot..."
-            if [ ! -z "$(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')" ]; then
-                kill $(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')
-            fi
+            /usr/bin/GSAbot --stop_bot
             echo "[-] Removing GSAbot cronjobs from system..."
             rm -f $CRON_PATH/GSAbot_*
+            echo "[-] Removing GSAbot systemd service from system..."
+            if [ -f /etc/systemd/system/GSAbot.service ]; then
+                rm -f /etc/systemd/system/GSAbot.service
+            fi
             echo "[-] Removing GSAbot from system..."
             rm -f /usr/bin/GSAbot
             rm -rf $GSAbot_PATH
