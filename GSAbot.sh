@@ -841,7 +841,7 @@ function GSAbot_install {
     echo "[!] Change the user name of the admin of the server bot..."
     read -r -p "[?] Enter admin's user name: " OPTION_SET_ADMIN
     echo "[+] Changing admin's user name..."
-    /bin/bash /usr/bin/GSAbot --set_admin
+    /bin/bash /usr/bin/GSAbot --set_admin $OPTION_SET_ADMIN
 
     # optionally create a systemd service file
     while true
@@ -1108,7 +1108,9 @@ function GSAbot_uninstall {
 
             echo "[!] GSAbot will be uninstalled now..."
             echo "[-] Stopping GSAbot..."
-            /usr/bin/GSAbot --stop_bot
+            if [ ! -z "$(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')" ]; then
+                kill $(ps aux | grep GSAbot.rb | grep -v grep | awk '{print $2}')
+            fi
             echo "[-] Removing GSAbot cronjobs from system..."
             rm -f $CRON_PATH/GSAbot_*
             echo "[-] Removing GSAbot systemd service from system..."
