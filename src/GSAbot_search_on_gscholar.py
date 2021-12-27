@@ -131,7 +131,7 @@ for ind in range(len(klist)):
 
 new = re.escape(';'.join(nlist) + ';')
 new = re.sub("'",' ',new)
-os.system("sed -i \"/LAST_GSCHOLAR=/c\LAST_GSCHOLAR=\x27%s\x27\" \"$HOME/.GSAbot/GSAbot.conf\"" % (new))
+os.system("sed -i \"/LAST_GSCHOLAR=/c\LAST_GSCHOLAR=\x27%s\x27\" \"%s\"" % (new,file_path))
 
 #############################################################################
 # END

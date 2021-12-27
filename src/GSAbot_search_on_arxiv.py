@@ -94,7 +94,7 @@ for ind in range(len(klist)):
   # If not previous request's result then store the first one
   # No messages are sent by the bot
   elif not llist[ind]:
-    nlist[ind] = outcome[0].title
+    nlist[ind] = next(outcome.results()).title
 
   # Else go through the ten results from the request and stop when
   # the title correspond to the last request's result
@@ -136,7 +136,7 @@ for ind in range(len(klist)):
 
 new = re.escape(';'.join(nlist) + ';')
 new = re.sub("'",' ',new)
-os.system('sed -i "/LAST_ARXIV=/c\LAST_ARXIV=\x27%s\x27" "$HOME/.GSAbot/GSAbot.conf"' % (new))
+os.system('sed -i "/LAST_ARXIV=/c\LAST_ARXIV=\x27%s\x27" "%s"' % (new,file_path))
 
 #############################################################################
 # END
