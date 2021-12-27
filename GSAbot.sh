@@ -602,20 +602,20 @@ function GSAbot_cron {
     # go through all the possible tasks and add them one by one
     # add an automatic upgrade of the bot task
     if [ "${GSAbot_UPGRADE}" == 'yes' ]; then
-        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron
+        echo -e "# This cronjob activates automatic upgrade of GSAbot on the chosen schedule\n${GSAbot_UPGRADE_CRON} root /usr/bin/GSAbot --silent-upgrade >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron
     fi
     # add a bot's update alerts task
     if [ "${GSAbot_UPDATES}" == 'yes' ]; then
-        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron
+        echo -e "# This cronjob activates automated checks of available updates of GSAbot on the chosen schedule\n${GSAbot_UPDATES_CRON} root /usr/bin/GSAbot --check_updates >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron
     fi
     # add a check & alert task if the status is on
     if [ "${ALERT_STATUS}" == 'on' ]; then
         # Cronjob for Google Scholar
         printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of Google Scholar and alerts on Telegram...\n'
-        echo -e "# This cronjob activates automated checks of Google Scholar and alerts on Telegram on the chosen schedule\n${ALERT_CRON_GSCHOLAR} /usr/bin/GSAbot --check gscholar >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
+        echo -e "# This cronjob activates automated checks of Google Scholar and alerts on Telegram on the chosen schedule\n${ALERT_CRON_GSCHOLAR} root /usr/bin/GSAbot --chat_id ${TELEGRAM_CHAT} --check gscholar >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
         # Cronjob for arXiv
         printf '\t\t \[\xE2\x9E\x95] Adding a cronjob for automated checks of arXiv and alerts on Telegram...\n'
-        echo -e "# This cronjob activates automated checks of arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON_ARXIV} /usr/bin/GSAbot --check arxiv >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
+        echo -e "# This cronjob activates automated checks of arXiv and alerts on Telegram on the chosen schedule\n${ALERT_CRON_ARXIV} root /usr/bin/GSAbot --chat_id ${TELEGRAM_CHAT} --check arxiv >/dev/null 2>&1" >> $CRON_PATH/GSAbot_cron_$TELEGRAM_CHAT
     fi
 
     # give user feedback when all automated tasks are disabled

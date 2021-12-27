@@ -37,7 +37,7 @@ Telegram::Bot::Client.run(token) do |bot|
     bot.listen do |message|
 
       time = Time.now
-      puts time.inspect + " @#{message.from.username}"\
+      puts time.inspect + " @#{message.from.username} "\
            "in #{message.chat.id} : #{message.text}"
       
       chat = message.chat.id
