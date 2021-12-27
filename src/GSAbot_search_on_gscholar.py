@@ -30,13 +30,13 @@ import difflib
 #############################################################################
 
 # Determining $HOME directory
-home = os.path.expanduser("~")
+file_path = sys.argv[1]
 
 # Reading the configuration file
 # There is no section in the config file
 # So here is a bypass found SOF
 # See: https://stackoverflow.com/a/25493615
-with open(home+'/.GSAbot/GSAbot.conf', 'r') as f:
+with open(file_path, 'r') as f:
     config_string = u'[foo]\n' + f.read()
 config = configparser.ConfigParser()
 config.read_string(config_string)

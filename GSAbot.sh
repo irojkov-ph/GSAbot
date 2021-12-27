@@ -442,7 +442,7 @@ function GSAbot_commands {
 
 function GSAbot_status {
     # return error when config file isn't installed on the system
-    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot__CHAT_CONFIG}" == 'disabled' ]; then
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
     fi
 
@@ -457,7 +457,7 @@ function GSAbot_status {
 
 function GSAbot_alert {
     # return error when config file isn't installed on the system
-    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot__CHAT_CONFIG}" == 'disabled' ]; then
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
     fi
 
@@ -475,7 +475,7 @@ function GSAbot_alert {
 
 function GSAbot_list { 
     # return error when config file isn't installed on the system
-    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot__CHAT_CONFIG}" == 'disabled' ]; then
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
     fi
 
@@ -504,7 +504,7 @@ function GSAbot_list {
 
 function GSAbot_add {
     # return error when config file isn't installed on the system
-    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot__CHAT_CONFIG}" == 'disabled' ]; then
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
     fi
 
@@ -537,7 +537,7 @@ function GSAbot_add {
 
 function GSAbot_remove {
     # return error when config file isn't installed on the system
-    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot__CHAT_CONFIG}" == 'disabled' ]; then
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
     fi
 
@@ -572,7 +572,7 @@ function GSAbot_remove {
 
 function GSAbot_cron {
     # return error when config file isn't installed on the system
-    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot__CHAT_CONFIG}" == 'disabled' ]; then
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
     fi
 
@@ -633,18 +633,18 @@ function GSAbot_cron {
 
 function GSAbot_check {
     # return error when config file isn't installed on the system
-    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot__CHAT_CONFIG}" == 'disabled' ]; then
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
     fi
 
     # check either gscholar, arxiv or both
     if [ "${OPTION_CHECK}" == 'gscholar' ]; then
-        RESULT_CHECK="$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py)"
+        RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG_CHAT}")
     elif [ "${OPTION_CHECK}" == 'arxiv' ]; then
-        RESULT_CHECK="$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py)"
+        RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py "${GSAbot_CONFIG_CHAT}")
     elif [ "${OPTION_CHECK}" == 'both' ]; then
-        RESULT_CHECK="$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py && 
-                        python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py)"
+        RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG_CHAT}" && 
+                       python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py "${GSAbot_CONFIG_CHAT}")
     fi
 
     # use Ruby for sending Telegram messages
@@ -1160,7 +1160,7 @@ function GSAbot_main {
     else
         # Options which require GSAbot_chat_XXX.conf
         # will not work if a chat id hasn't been specified
-        GSAbot_CHAT_CONFIG='disabled'
+        GSAbot_CONFIG_CHAT='disabled'
     fi
     if [ "${ARGUMENT_START}" == '1' ]; then
         GSAbot_start

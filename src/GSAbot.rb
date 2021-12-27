@@ -27,6 +27,25 @@ token = config['TELEGRAM_TOKEN']
 admin = config['GSAbot_SERVER_ADMIN']
 
 #############################################################################
+# USEFUL FUNCTION
+#############################################################################
+
+def displaystyle (string)
+  list_forbidden_char = [ '*', '[', ']', '(', ')', '~', '`',\
+                          '>', '#', '+', '-', '=', '|', '{',\
+                          '}', '.', '!', '_' ]
+  
+  new_string = string.clone
+  for el in list_forbidden_char
+    if new_string.include?(el)
+      new_string = new_string.gsub! el, "\\#{el}"
+    end
+  end
+
+  return new_string
+end
+
+#############################################################################
 # MAIN LOOP (LISTEN FOR COMMANDS)
 #############################################################################
 just_started = 1
@@ -41,19 +60,10 @@ Telegram::Bot::Client.run(token) do |bot|
            "in #{message.chat.id} : #{message.text}"
       
       chat = message.chat.id
-
-      list_forbidden_char = [ '*', '[', ']', '(', ')', '~', '`',\
-                              '>', '#', '+', '-', '=', '|', '{',\
-                              '}', '.', '!', '_' ]
-      msg = message.text
-      for el in list_forbidden_char
-        if msg.include?(el)
-          msg = msg.gsub! el, "\\#{el}"
-        end
-      end
-      splitted_txt = msg.split
-      command      = splitted_txt.shift
-      arguments    = splitted_txt
+      
+      splitted_txt  = message.text.split
+      command       = splitted_txt.shift 
+      arguments     = splitted_txt      
 
       if arguments.length > 1 and not ["/add","/remove","/cron"].include?(command)
         reply = "\xE2\x9A\xA0 *Warning*\nI don't know what to do, "\
@@ -92,7 +102,8 @@ Telegram::Bot::Client.run(token) do |bot|
             cmd = "GSAbot --chat_id #{chat} --list"
             reply = `#{cmd}`
           when /cron/i
-            cmd = ["GSAbot --chat_id #{chat} --cron",arguments," "].join(' ')
+            arg = displaystyle arguments.join(' ')
+            cmd = ["GSAbot --chat_id #{chat} --cron",arg," "].join(' ')
             reply = `#{cmd}`
           when /check_gscholar/i
             cmd = "GSAbot --chat_id #{chat} --check gscholar"
@@ -126,7 +137,8 @@ Telegram::Bot::Client.run(token) do |bot|
                       "I'll try to not deceive you this time."
             end  
           else
-            reply = "I have no idea what #{command} means."
+            cmd_disp = displaystyle command
+            reply = "I have no idea what #{cmd_disp} means."
         end
       end
 
