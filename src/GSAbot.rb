@@ -155,6 +155,11 @@ Telegram::Bot::Client.run(token) do |bot|
 
       just_started = 0
     end
+  rescue Faraday::Error::ConnectionFailed
+    time = Time.now
+    puts time.inspect + " Rescued 'Connection Failed': check the server's internet connection retry in 60s."
+    sleep(60)
+    retry
   rescue StandardError => e
     time = Time.now
     puts time.inspect + " Rescued: #{e.inspect}"

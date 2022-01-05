@@ -29,22 +29,30 @@ import difflib
 # READING CONFIG FILE
 #############################################################################
 
-# Determining $HOME directory
-file_path = sys.argv[1]
+# General config file path
+gen_file_path = sys.argv[1]
 
-# Reading the configuration file
+# Chat's config file path
+chat_file_path = sys.argv[2]
+
+# Reading the (general and chat) configuration file
 # There is no section in the config file
 # So here is a bypass found SOF
 # See: https://stackoverflow.com/a/25493615
-with open(file_path, 'r') as f:
-    config_string = u'[foo]\n' + f.read()
-config = configparser.ConfigParser()
-config.read_string(config_string)
+with open(gen_file_path, 'r') as f:
+    gen_config_string = u'[foo]\n' + f.read()
+with open(chat_file_path, 'r') as f:
+    chat_config_string = u'[foo]\n' + f.read()
 
-# Reading Scale SERP token
+# Create config parser
+config = configparser.ConfigParser()
+
+# Reading Scale SERP token from general config
+config.read_string(gen_config_string)
 token = config['foo']['SCALESERP_TOKEN'][1:-1]
 
-# Reading keywords
+# Reading keywords from chat's config
+config.read_string(chat_config_string)
 keywords = config['foo']['KEYWORDS'][1:-2]
 if not keywords:
   sys.exit('GSAbot: No keywords !')
@@ -55,6 +63,10 @@ last = config['foo']['LAST_GSCHOLAR'][1:-2]
 # Creating new results for current request
 new = ''
 
+# Creating a dummy list of titles used to filter out
+# duplicates of new articles
+dummy_title_list = []
+
 # Splitting the keywords and last result
 klist = keywords.split(';')
 llist = last.split(';')
@@ -62,10 +74,8 @@ nlist = new.split(';')
 
 if len(klist)>len(llist):
   llist.extend([u'']*(len(klist)-len(llist)))
-elif len(klist)<len(llist):
-  llist = llist[:len(llist)-len(klist)-1]
 
-nlist.extend([u'']*(len(klist)-len(nlist)))
+nlist.extend([u'']*len(klist))
 
 #############################################################################
 # SENDING REQUESTS
@@ -91,7 +101,7 @@ for ind in range(len(klist)):
 
   # Storing the JSON response from Scale SERP
   outcome = api_result.json()
-  
+
   # If not previous request's result then store the first one
   # No messages are sent by the bot
   if not llist[ind]:
@@ -121,9 +131,11 @@ for ind in range(len(klist)):
       title = title.lstrip()
       title = title[0].upper() + title[1:].lower()
 
-      print('*%s*\n' % title)
-      print('[link](%s)\n' % outcome['scholar_results'][pos]['link'])
-      print('------\n')
+      if title not in dummy_title_list:
+        print('*%s*\n' % title)
+        print('[link](%s)\n' % outcome['scholar_results'][pos]['link'])
+        print('------\n')
+        dummy_title_list.append(title)
 
 #############################################################################
 # WRITING CONFIG FILE
@@ -131,7 +143,7 @@ for ind in range(len(klist)):
 
 new = re.escape(';'.join(nlist) + ';')
 new = re.sub("'",' ',new)
-os.system("sed -i \"/LAST_GSCHOLAR=/c\LAST_GSCHOLAR=\x27%s\x27\" \"%s\"" % (new,file_path))
+os.system("sed -i \"/LAST_GSCHOLAR=/c\LAST_GSCHOLAR=\x27%s\x27\" \"%s\"" % (new,chat_file_path))
 
 #############################################################################
 # END

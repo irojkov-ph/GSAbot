@@ -50,6 +50,10 @@ last = config['foo']['LAST_ARXIV'][1:-2]
 # Creating new results for current request
 new = ''
 
+# Creating a dummy list of titles used to filter out
+# duplicates of new articles
+dummy_title_list = []
+
 # Splitting the keywords and last result
 klist = keywords.split(';')
 llist = last.split(';')
@@ -57,10 +61,8 @@ nlist = new.split(';')
 
 if len(klist)>len(llist):
   llist.extend([u'']*(len(klist)-len(llist)))
-elif len(klist)<len(llist):
-  llist = llist[:len(llist)-len(klist)-1]
 
-nlist.extend([u'']*(len(klist)-len(nlist)))
+nlist.extend([u'']*len(klist))
 
 #############################################################################
 # SENDING REQUESTS
@@ -104,7 +106,6 @@ for ind in range(len(klist)):
     pos=0
 
     for out in outcome.results():
-    #for pos in range(len(outcome)):
       title = out.title
 
       # First element becomes the new 'last request'
@@ -125,10 +126,12 @@ for ind in range(len(klist)):
       title = title.lstrip()
       title = title[0].upper() + title[1:].lower()
 
-      print('*%s*\n' % title)
-      print('_Last Update:_ %s \t _Published:_ %s\n' % (out.updated.date(),out.published.date()))
-      print('%s\n' % out.entry_id)
-      print('------\n')
+      if title not in dummy_title_list:
+        print('*%s*\n' % title)
+        print('_Last Update:_ %s \t _Published:_ %s\n' % (out.updated.date(),out.published.date()))
+        print('%s\n' % out.entry_id)
+        print('------\n')
+        dummy_title_list.append(title)
 
 #############################################################################
 # WRITING CONFIG FILE

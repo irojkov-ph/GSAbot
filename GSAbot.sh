@@ -451,7 +451,7 @@ function GSAbot_status {
     if [ "${ALERT_STATUS}" == 'on' ]; then
         printf '\t\t *Status :* \t\t *%s* \t \xE2\x9C\x85\n' $ALERT_STATUS
     else
-        printf "\t\t <b>Status :</b> \t\t <strong>%s</strong> \t \xE2\x9B\x94\n" $ALERT_STATUS
+        printf "\t\t *Status :* \t\t *%s* \t \xE2\x9B\x94\n" $ALERT_STATUS
     fi
 }
 
@@ -468,12 +468,17 @@ function GSAbot_alert {
         sed -i "s/ALERT_STATUS='$ALERT_STATUS'/ALERT_STATUS='$OPTION_ALERT'/" $GSAbot_CONFIG_CHAT
 
         # print the msg
-        printf "I changed my alert status from %s to %s. \n" $ALERT_STATUS $OPTION_ALERT
+        printf "I changed my alert status from %s to %s." $ALERT_STATUS $OPTION_ALERT
         printf "You can check it by sending the command /status. \n"
+        printf "I will now update the cron jobs accordingly.\n"
+        printf "\n"
     fi
+
+    # update the cron job files
+    /bin/bash /usr/bin/GSAbot --chat_id $TELEGRAM_CHAT --cron
 }
 
-function GSAbot_list { 
+function GSAbot_list {
     # return error when config file isn't installed on the system
     if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
         error_not_available
@@ -494,7 +499,7 @@ function GSAbot_list {
         printf "but the alerts are currently disabled. Send "
         printf '"*/alert _on_*" to enable them.\n'
     fi
-    
+
     # use internal field separator (IFS) to parse the string into an array
     IFS=';' read -ra ADDR <<< "$KEYWORDS"
     for i in "${ADDR[@]}"; do
@@ -532,7 +537,7 @@ function GSAbot_add {
 
     # update the configuration file
     sed -i "s/KEYWORDS='$KEYWORDS'/KEYWORDS='$NEW_KEYWORDS'/" $GSAbot_CONFIG_CHAT
- 
+
 }
 
 function GSAbot_remove {
@@ -639,11 +644,13 @@ function GSAbot_check {
 
     # check either gscholar, arxiv or both
     if [ "${OPTION_CHECK}" == 'gscholar' ]; then
-        RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG_CHAT}")
+	GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
+        RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG}" "${GSAbot_CONFIG_CHAT}")
     elif [ "${OPTION_CHECK}" == 'arxiv' ]; then
         RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py "${GSAbot_CONFIG_CHAT}")
     elif [ "${OPTION_CHECK}" == 'both' ]; then
-        RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG_CHAT}" && 
+	GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
+        RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG}" "${GSAbot_CONFIG_CHAT}" && 
                        python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py "${GSAbot_CONFIG_CHAT}")
     fi
 
