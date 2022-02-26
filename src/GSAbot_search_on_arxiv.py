@@ -23,6 +23,15 @@ import re
 import sys
 import difflib
 
+def shorten_name(fullname):
+  lst = fullname.split()
+  shortname = ""
+  for i in range(len(lst)-1):
+    str1 = lst[i]
+    shortname += (str1[0].upper()+'.')
+  shortname += lst[-1].title()
+  return shortname 
+
 #############################################################################
 # READING CONFIG FILE
 #############################################################################
@@ -82,18 +91,18 @@ for ind in range(len(klist)):
 
   # Sending the query
   outcome = arxiv.Search(query=query,
-                        max_results=max_results,
-                        sort_by=arxiv.SortCriterion.LastUpdatedDate)
+                         max_results=max_results,
+                         sort_by=arxiv.SortCriterion.LastUpdatedDate)
 
   # Check if the outcome is empty, if yes send a warning !
-  if not outcome:
-    print("""\xE2\x9A\xA0 *Warning* \t the keyword *%s* is not good )
-             (either too restrictive, too loose or with an erroneous character)
-             because I find no results on arXiv
-             which are related to it ! Please change it.\n
+  if not any(outcome.results()):
+    print("""\xE2\x9A\xA0 *Warning* \t the keyword *%s* is not good
+             (either too restrictive, too loose or with an erroneous
+             character) because I find no results on arXiv which are
+             related to it! Please change it.\n
              ------\n""" % klist[ind] )
 
-  # If not previous request's result then store the first one
+  # If no previous request's result then store the first one
   # No messages are sent by the bot
   elif not llist[ind]:
     nlist[ind] = next(outcome.results()).title
@@ -126,8 +135,12 @@ for ind in range(len(klist)):
       title = title.lstrip()
       title = title[0].upper() + title[1:].lower()
 
+      authors = [shorten_name(x.name) for x in out.authors]
+      authors = ', '.join(authors)
+
       if title not in dummy_title_list:
         print('*%s*\n' % title)
+        print('%s\n' % authors)
         print('_Last Update:_ %s \t _Published:_ %s\n' % (out.updated.date(),out.published.date()))
         print('%s\n' % out.entry_id)
         print('------\n')

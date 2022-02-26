@@ -76,7 +76,7 @@ Telegram::Bot::Client.run(token) do |bot|
             reply = "Hi #{message.from.first_name},  nice to meet you! "\
                     "I am GSAbot 🤖 \nI can send you alerts when new papers, "\
                     "articles, books, etc. related to *your* favourite "\
-                    "keywords are published on Google Scholar/arXiv.\n"\
+                    "keywords are released on Google Scholar/arXiv.\n"\
                     "Btw the id of this chat is #{chat}.\n"\
                     "#{tmp}"\
                     "Send /help so see what kind of commands I understand!"
@@ -95,9 +95,11 @@ Telegram::Bot::Client.run(token) do |bot|
           when /add/i
             cmd = ["GSAbot --chat_id #{chat} --add '",arguments,"' "].join(' ')
             reply = `#{cmd}`
+            Process.spawn("GSAbot --chat_id #{chat} --check both")
           when /remove/i
             cmd = ["GSAbot --chat_id #{chat} --remove '",arguments,"' "].join(' ')
             reply = `#{cmd}`
+            Process.spawn("GSAbot --chat_id #{chat} --check both")
           when /list/i
             cmd = "GSAbot --chat_id #{chat} --list"
             reply = `#{cmd}`
@@ -109,14 +111,24 @@ Telegram::Bot::Client.run(token) do |bot|
             cmd = "GSAbot --chat_id #{chat} --check gscholar"
             tmp = `#{cmd}`
             reply = "I've just checked Google Scholar, if nothing appeared "\
-                    "that means no new articles were published since the last check.\n"\
+                    "that means no new elements were released since the last check.\n"\
                     'Try out "*/check_arxiv*" for checking arXiv!'
           when /check_arxiv/i
             cmd = "GSAbot --chat_id #{chat} --check arxiv"
             tmp = `#{cmd}`
             reply = "I've just checked arXiv, if nothing appeared "\
-                    "that means no new articles were published since the last check.\n"\
+                    "that means no new elements were released since the last check.\n"\
                     'Try out "*/check_gscholar*" for checking Google Scholar!'
+          when /last_gscholar/i
+            cmd = "GSAbot --chat_id #{chat} --last gscholar"
+            tmp = `#{cmd}`
+            reply = 'Try out "*/last_arxiv*" to see what are the last arXiv '\
+                    'elements that I have in memory for every keyword.'
+          when /last_arxiv/i
+            cmd = "GSAbot --chat_id #{chat} --last arxiv"
+            tmp = `#{cmd}`
+            reply = 'Try out "*/last_gscholar*" to see what are the last Google Scholar '\
+                    'elements that I have in memory for every keyword.'
           when /check_updates/i
             cmd = "GSAbot --chat_id #{chat} --check_updates"
             reply = `#{cmd}`
@@ -155,14 +167,16 @@ Telegram::Bot::Client.run(token) do |bot|
 
       just_started = 0
     end
-  rescue Faraday::Error::ConnectionFailed
+  rescue Faraday::ConnectionFailed
     time = Time.now
     puts time.inspect + " Rescued 'Connection Failed': check the server's internet connection retry in 60s."
     sleep(60)
     retry
   rescue StandardError => e
     time = Time.now
-    puts time.inspect + " Rescued: #{e.inspect}"
+    puts time.inspect + " Rescued: #{e.message}"
+    puts "Cause: #{e.cause}"
+    puts "Backtrace: #{e.backtrace}"
     retry
   end
 end

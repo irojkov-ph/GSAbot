@@ -123,6 +123,13 @@ while test -n "$1"; do
             shift
             ;;
 
+        --last)
+            ARGUMENT_LAST='1'
+            OPTION_LAST="$2"
+            shift
+            shift
+            ;;
+
         --check_updates)
             ARGUMENT_UPDATES='1'
             shift
@@ -297,6 +304,9 @@ function requirement_argument_validity {
         fi
     # --check specified but no more argument 
     elif [ "${ARGUMENT_CHECK}" == '1' ] && [ -z "${OPTION_CHECK}" ]; then
+        error_invalid_option
+    # --check specified but no more argument 
+    elif [ "${ARGUMENT_LAST}" == '1' ] && [ -z "${OPTION_LAST}" ]; then
         error_invalid_option
     # --set_token specified but no other elements
     elif [ "${ARGUMENT_SET_TOKEN}" == '1' ] && [ -z "${OPTION_TELEGRAM_TOKEN}" ] && [ -z "${OPTION_SCALESERP_TOKEN}" ] ; then
@@ -538,6 +548,10 @@ function GSAbot_add {
     # update the configuration file
     sed -i "s/KEYWORDS='$KEYWORDS'/KEYWORDS='$NEW_KEYWORDS'/" $GSAbot_CONFIG_CHAT
 
+    # erase last arxiv and gscholar search results
+    sed -i "s/LAST_ARXIV='$LAST_ARXIV'/LAST_ARXIV=''/" $GSAbot_CONFIG_CHAT
+    sed -i "s/LAST_GSCHOLAR='$LAST_GSCHOLAR'/LAST_GSCHOLAR=''/" $GSAbot_CONFIG_CHAT
+
 }
 
 function GSAbot_remove {
@@ -572,6 +586,10 @@ function GSAbot_remove {
 
     # update the configuration file
     sed -i "s/KEYWORDS='$KEYWORDS'/KEYWORDS='$NEW_KEYWORDS'/" $GSAbot_CONFIG_CHAT
+
+    # erase last arxiv and gscholar search results
+    sed -i "s/LAST_ARXIV='$LAST_ARXIV'/LAST_ARXIV=''/" $GSAbot_CONFIG_CHAT
+    sed -i "s/LAST_GSCHOLAR='$LAST_GSCHOLAR'/LAST_GSCHOLAR=''/" $GSAbot_CONFIG_CHAT
 
 }
 
@@ -644,12 +662,12 @@ function GSAbot_check {
 
     # check either gscholar, arxiv or both
     if [ "${OPTION_CHECK}" == 'gscholar' ]; then
-	GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
+	    GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
         RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG}" "${GSAbot_CONFIG_CHAT}")
     elif [ "${OPTION_CHECK}" == 'arxiv' ]; then
         RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py "${GSAbot_CONFIG_CHAT}")
     elif [ "${OPTION_CHECK}" == 'both' ]; then
-	GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
+	    GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
         RESULT_CHECK=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_gscholar.py "${GSAbot_CONFIG}" "${GSAbot_CONFIG_CHAT}" && 
                        python3 -W ignore ${GSAbot_PATH}/GSAbot_search_on_arxiv.py "${GSAbot_CONFIG_CHAT}")
     fi
@@ -668,6 +686,47 @@ function GSAbot_check {
             text: res, \
             parse_mode: 'MarkDown' \
             )
+
+          sleep(0.1)
+        end
+      end
+EOF
+}
+
+function GSAbot_last {
+    # return error when config file isn't installed on the system
+    if [ "${GSAbot_CONFIG}" == 'disabled' ] || [ "${GSAbot_CONFIG_CHAT}" == 'disabled' ]; then
+        error_not_available
+    fi
+
+    # check either gscholar, arxiv or both
+    if [ "${OPTION_LAST}" == 'gscholar' ]; then
+	    GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
+        RESULT_LAST=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_last_gscholar.py "${GSAbot_CONFIG}" "${GSAbot_CONFIG_CHAT}")
+    elif [ "${OPTION_LAST}" == 'arxiv' ]; then
+        RESULT_LAST=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_last_arxiv.py "${GSAbot_CONFIG_CHAT}")
+    elif [ "${OPTION_LAST}" == 'both' ]; then
+	    GSAbot_CONFIG="${GSAbot_PATH}/GSAbot.conf"
+        RESULT_LAST=$(python3 -W ignore ${GSAbot_PATH}/GSAbot_last_gscholar.py "${GSAbot_CONFIG}" "${GSAbot_CONFIG_CHAT}" && 
+                      python3 -W ignore ${GSAbot_PATH}/GSAbot_last_arxiv.py "${GSAbot_CONFIG_CHAT}")
+    fi
+
+    # use Ruby for sending Telegram messages
+    ruby <<EOF
+      require 'telegram/bot'
+      
+      Telegram::Bot::Client.run("${TELEGRAM_TOKEN}") do |bot|
+
+        scholar_result = "${RESULT_LAST}".split('------')
+        for res in scholar_result
+          
+          bot.api.send_message( \
+            chat_id: "${TELEGRAM_CHAT}", \
+            text: res, \
+            parse_mode: 'MarkDown' \
+            )
+
+          sleep(0.1)
         end
       end
 EOF
@@ -828,10 +887,16 @@ function GSAbot_install {
          -O $GSAbot_PATH/GSAbot_search_on_gscholar.py
     wget --quiet $GSAbot_GITHUB_LINK/$GSAbot_BRANCH/src/GSAbot_search_on_arxiv.py \
          -O $GSAbot_PATH/GSAbot_search_on_arxiv.py    
+    wget --quiet $GSAbot_GITHUB_LINK/$GSAbot_BRANCH/src/GSAbot_last_gscholar.py \
+         -O $GSAbot_PATH/GSAbot_last_gscholar.py
+    wget --quiet $GSAbot_GITHUB_LINK/$GSAbot_BRANCH/src/GSAbot_last_arxiv.py \
+         -O $GSAbot_PATH/GSAbot_last_arxiv.py   
     chmod 755 /usr/bin/GSAbot
     chmod 755 $GSAbot_PATH/GSAbot.rb
     chmod 755 $GSAbot_PATH/GSAbot_search_on_gscholar.py
     chmod 755 $GSAbot_PATH/GSAbot_search_on_arxiv.py
+    chmod 755 $GSAbot_PATH/GSAbot_last_gscholar.py
+    chmod 755 $GSAbot_PATH/GSAbot_last_arxiv.py
     # create a log file in the $GSAbot_PATH folder
     touch $GSAbot_PATH/GSAbot.log
     chmod 666 $GSAbot_PATH/GSAbot.log
@@ -1201,6 +1266,9 @@ function GSAbot_main {
     fi
     if [ "${ARGUMENT_CHECK}" == '1' ]; then
         GSAbot_check
+    fi
+    if [ "${ARGUMENT_LAST}" == '1' ]; then
+        GSAbot_last
     fi
     if [ "${ARGUMENT_UPDATES}" == '1' ]; then
         GSAbot_check_updates
