@@ -1,0 +1,13 @@
+# The following lines contain Telegram commands of the bot and their description.
+# To make them appear in Telegram, copy-paste the following lines in the bot config using the BotFather bot.
+help - Show the help message 
+status - Show the alert status (on or off)
+alert - Change the alert status, you should specify on or off
+add - Add one or multiple keywords/keyphrases to the list
+remove - Remove a keyword/keyphrase from the list
+list - Show the list of keywords to search of Google Scholar/arXiv
+cron - Change the frequency of the alerts
+check_gscholar - Check Google Scholar manually (can take quite some time)
+check_arxiv - Check arXiv manually (can take quite some time)
+last_gscholar - See last Google Scholar elements in memory for each keyword
+last_arxiv - See last arXiv elements in memory for each keyword

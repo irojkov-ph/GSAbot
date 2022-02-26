@@ -59,38 +59,32 @@ if not keywords:
 # Reading last results from previous request
 last = config['foo']['LAST_GSCHOLAR'][1:-2]
 
-# Creating new results for current request
-new = ''
-
-# Creating a dummy list of titles used to filter out
-# duplicates of new articles
-dummy_title_list = []
-
 # Splitting the keywords and last result
 klist = keywords.split(';')
 llist = last.split(';')
-nlist = new.split(';')
 
 if len(klist)>len(llist):
-  llist.extend([u'']*(len(klist)-len(llist)))
-
-nlist.extend([u'']*len(klist))
+  num_new_keywords = len(klist)-len(llist)
+else:
+  num_new_keywords = 0
 
 #############################################################################
 # SENDING REQUESTS
 #############################################################################
 
-for ind in range(len(klist)):
+for ind in range(len(llist)):
   # Setting up the request parameters
+  # Carreful we now search by last result titles rather than keywords
+  # could cause errors
   params = {
     'api_key': token,
-    'q': klist[ind],
+    'q': llist[ind],
     'search_type': 'scholar',
     'sort_by': 'date',
     'time_period': 'custom',
     'time_period_min': '01/01/1900',
     'output': 'json',
-    'hl': 'en',
+    'hl': 'en', 
     'gl': 'us',
     'include_html': 'false',
     'scholar_patents_courts': '1',
@@ -103,62 +97,38 @@ for ind in range(len(klist)):
   # Storing the JSON response from Scale SERP
   outcome = api_result.json()
 
-  # Check if the outcome json has any results
+  # If we don't find any article send warning
   if not 'scholar_results' in outcome:
-    print("""\xE2\x9A\xA0 *Warning* \t the keyword *%s* is not good
-             (either too restrictive, too loose or with an erroneous
-             character) because I find no results on Google Scholar
-             which are related to it! Please change it.\n
-             ------\n""" % klist[ind] )
-    nlist[ind]="None"
+    print(' - For _%s_:\n' % klist[ind])
+    print("The last article name was *%s* but I can't find on Google Scholar right now." % llist[ind])
+    print('------\n')
+    continue
 
-  # If no previous request's result then store the first one
-  # No messages are sent by the bot
-  elif not llist[ind]:
-    nlist[ind] = outcome['scholar_results'][0]['title']
+  # Creating the pair of elements [title,displayed link]
+  pair = [outcome['scholar_results'][0]['title'],
+          outcome['scholar_results'][0]['displayed_link'] ]
 
-  # Else go through the ten results from the request and stop when
-  # the title correspond to the last request's result
-  # For every new element, the bot sends a message.
-  else:
-    for pos in range(10):
-      # Creating the pair of elements [title,displayed link]
-      pair = [outcome['scholar_results'][pos]['title'],
-              outcome['scholar_results'][pos]['displayed_link'] ]
+  # Formating the both elements to the right printing format
+  # for Telegram
+  for el in range(0,len(pair)-1):
+    pair[el] = re.sub('\[.*?\]', '', pair[el])
+    pair[el] = re.sub('<.*?>', '', pair[el])
+    pair[el] = re.sub('\n', '', pair[el])
+    pair[el] = re.sub('\u2026','',pair[el])
+    pair[el] = pair[el].replace('_','\\_')
+    pair[el] = re.escape(pair[el])
+    pair[el] = pair[el].lstrip()
+    pair[el] = pair[el][0].upper() + pair[el][1:].lower()
 
-      # Formating the both elements to the right printing format
-      # for Telegram
-      for el in range(0,len(pair)-1):
-        pair[el] = re.sub('\[.*?\]', '', pair[el])
-        pair[el] = re.sub('<.*?>', '', pair[el])
-        pair[el] = re.sub('\n', '', pair[el])
-        pair[el] = re.sub('\u2026','',pair[el])
-        pair[el] = pair[el].replace('_','\\_')
-        pair[el] = re.escape(pair[el])
-        pair[el] = pair[el].lstrip()
-        pair[el] = pair[el][0].upper() + pair[el][1:].lower()
+  print(' - For _%s_:\n' % klist[ind])
+  print('*%s*\n' % pair[0])
+  print('[%s](%s)\n' % (pair[1],outcome['scholar_results'][0]['link']) )
+  print('------\n')
 
-      # First element becomes the new 'last request'
-      if pos == 0:
-        nlist[ind] = pair[0]
-
-      # Determining if new and last titles are similar
-      sim_score=difflib.SequenceMatcher(a=pair[0].lower(), b=llist[ind].lower()).ratio()
-      if sim_score>.8: break
-
-      if pair[0] not in dummy_title_list:
-        print('*%s*\n' % pair[0])
-        print('[%s](%s)\n' % (pair[1],outcome['scholar_results'][pos]['link']) )
-        print('------\n')
-        dummy_title_list.append(pair[0])
-
-#############################################################################
-# WRITING CONFIG FILE
-#############################################################################
-
-new = re.escape(';'.join(nlist) + ';')
-new = re.sub("'",' ',new)
-os.system("sed -i \"/LAST_GSCHOLAR=/c\LAST_GSCHOLAR=\x27%s\x27\" \"%s\"" % (new,chat_file_path))
+if num_new_keywords:
+  print(' - There are also _%i_ new keyword(s) that have ' % num_new_keywords)
+  print("   not been checked on Google Scholar yet.\n ")
+  print('------\n')
 
 #############################################################################
 # END
