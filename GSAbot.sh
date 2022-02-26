@@ -33,7 +33,7 @@ else
     GSAbot_CONFIG='disabled'
 
     # and default to stable branch
-    GSAbot_BRANCH='v3.beta'
+    GSAbot_BRANCH='main'
 fi
 
 #############################################################################
@@ -443,9 +443,11 @@ function GSAbot_commands {
     printf "\t\t /cron '5 4 \* \* \*' \t (check both every day at 04:05)\n"
     printf "\t\t /cron gscholar '5 4 \* \* \*' \t (check G. Scholar every day at 04:05)\n"
     printf "\t\t /cron arxiv '5 4 \* \* \*' \t (check arXiv every day at 04:05)\n\n"
-    printf "/version - Show information about my version\n\n"
     printf "/check\_gscholar - Check Google Scholar manually (can take quite some time)\n\n"
     printf "/check\_arxiv - Check arXiv manually (can take quite some time)\n\n"
+    printf "/last\_gscholar - See last Google Scholar elements in memory for each keyword\n\n"
+    printf "/last\_arxiv - See last arXiv elements in memory for each keyword\n\n"
+    printf "/version - Show information about my version\n\n"
     printf "/check\_updates - Check GSAbot's updates manually\n\n"
     printf "/stop - Stop the bot on the server\n\n"
 }
